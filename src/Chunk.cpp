@@ -1,6 +1,7 @@
 #include "Chunk.hpp"
 
-Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree)
+Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
+								 _totalCubes(0)
 {
 
 	_program = new ShadingProgram("src/chunkVertex.glsl", "", "src/chunkFrag.glsl");
@@ -191,6 +192,9 @@ void	Chunk::UsePerspective(std::pair<glm::mat4, glm::mat4> p)
 void	Chunk::Render(void)
 {
 	_program->Use();
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
 	
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, _cubeVertexID);

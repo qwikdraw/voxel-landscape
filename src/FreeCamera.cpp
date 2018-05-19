@@ -10,8 +10,8 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 	_rotation = glm::mat4(1);
 	_aspect = 1;
 	_near = 0.1;
-	_far = 1000;
-	_fov = 45;
+	_far = 512;
+	_fov = 80;
 
         glm::mat4 translate = glm::translate(_position);
 	glm::mat4 lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),

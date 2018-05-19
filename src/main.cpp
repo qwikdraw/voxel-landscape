@@ -3,20 +3,21 @@
 #include "Window.hpp"
 #include "FreeCamera.hpp"
 #include "Landscape.hpp"
+#include "FPSDisplay.hpp"
 
 static bool	sphere(glm::vec3 p)
 {
-	if (glm::length(p) < 70)
+	if (p.x + p.y + p.z < p.y * p.y - p.z * p.x + 2 * p.y * p.x)
 		return true;
-	return true;
+	return false;
 }
 
 int	main(void)
 {
 	Window window(1000, 1000, "");
 	
-	OcTree *tree = OcTree::Generate64(sphere, glm::vec3(0, 0, 0));
-	Chunk *chunk = new Chunk(glm::vec3(0, 0, 0), tree, 6);
+	Landscape l(sphere);
+	FPSDisplay fps;
 
 	glClearColor(0.2, 0.25, 0.3, 1);
 
@@ -26,8 +27,9 @@ int	main(void)
 	{
 		window.Clear();
 		cam.Update();
-		chunk->UsePerspective(cam.Perspective());
-		chunk->Render();
+		l.Render(cam.Perspective());
+		fps.Render();
+		glFinish();
 		window.Render();
 	}
 	window.Close();

@@ -1,10 +1,11 @@
 #version 410 core
 
 in float lightAmount;
+in vec3 col;
 
 out vec3 color;
 
 void	main()
 {
-	color = vec3(1, 1, 0.5) * lightAmount;
+	color = col * lightAmount;
 }
