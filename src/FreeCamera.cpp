@@ -86,7 +86,7 @@ void	FreeCamera::Update(void)
 	if (moved)
 	{
 		glm::mat4 translate = glm::translate(_position);
-		glm::mat4 lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
+		glm::mat4 lookAt = glm::lookAt(glm::vec3(translate * glm::vec4(_basePos, 1)),
 					       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
 					       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
 		glm::mat4 perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);

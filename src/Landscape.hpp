@@ -6,10 +6,11 @@
 class	Landscape
 {
 
-	Chunk *_chunks[5][5][5]; // _chunks[4][4][4] is the center
+	Chunk *_chunks[9][9][9]; // _chunks[4][4][4] is the center
 	glm::vec3 _center;
 	std::function<bool(glm::vec3)> _formula;
 
+	std::vector<Chunk*>	ChunksToRender(glm::vec3 pos, glm::vec3 dir);
 	
 public:
 

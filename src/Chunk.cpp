@@ -174,7 +174,7 @@ void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm:
 		getCubes(tree->branch[i],
 			 depth_level + 1,
 			 detail_level,
-			 center + offsets[i] * ((unsigned)64 >> (depth_level + 1)));
+			 center + offsets[i] * (float)((unsigned)64 >> (depth_level + 1)));
 	}
 }
 
