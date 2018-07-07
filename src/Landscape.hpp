@@ -2,6 +2,7 @@
 
 #include "Chunk.hpp"
 #include "voxel.hpp"
+#include "FreeCamera.hpp"
 
 class	Landscape
 {
@@ -10,10 +11,10 @@ class	Landscape
 	glm::vec3 _center;
 	std::function<bool(glm::vec3)> _formula;
 
-	std::vector<Chunk*>	ChunksToRender(glm::vec3 pos, glm::vec3 dir);
+	std::vector<Chunk*>	ChunksToRender(const glm::vec3& pos, const glm::vec3& dir);
 	
 public:
 
 	Landscape(std::function<bool(glm::vec3)>);
-	void	Render(std::pair<glm::mat4, glm::mat4> perspective);
+	void	Render(const Projection& projection);
 };

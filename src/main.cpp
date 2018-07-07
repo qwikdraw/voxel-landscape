@@ -27,7 +27,7 @@ int	main(void)
 	{
 		window.Clear();
 		cam.Update();
-		l.Render(cam.Perspective());
+		l.Render(cam.Projection());
 		fps.Render();
 		glFinish();
 		window.Render();

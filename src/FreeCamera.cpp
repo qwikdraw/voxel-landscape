@@ -6,7 +6,7 @@ glm::vec3 constexpr FreeCamera::_forward;
 
 FreeCamera::FreeCamera(Window& window) : _window(window)
 {
-	_position = _basePos;
+	_projection.position = _basePos;
 	_rotation = glm::mat4(1);
 	_aspect = 1;
 	_near = 0.1;
@@ -14,18 +14,17 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 	_fov = 80;
 
         glm::mat4 translate = glm::translate(_position);
-	glm::mat4 lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
+	_projection.lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
 				       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
 				       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-	glm::mat4 perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-	_perspective.first = lookAt;
-	_perspective.second = perspective;
+	_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+	_projection.dir = glm::vec3(_rotation * glm::vec4(_forward, 0));
 }
 
 void	FreeCamera::relativeMove(glm::vec3 amount)
 {
 	glm::vec3 absolute = glm::vec3(_rotation * glm::vec4(amount, 0));
-	_position += absolute;
+	_projection.position += absolute;
 }
 
 void	FreeCamera::Update(void)
@@ -85,18 +84,16 @@ void	FreeCamera::Update(void)
 	
 	if (moved)
 	{
-		glm::mat4 translate = glm::translate(_position);
-		glm::mat4 lookAt = glm::lookAt(glm::vec3(translate * glm::vec4(_basePos, 1)),
+		glm::mat4 translate = glm::translate(_projection.position);
+		_projection.lookAt = glm::lookAt(glm::vec3(translate * glm::vec4(_basePos, 1)),
 					       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
 					       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-		glm::mat4 perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-
-		_perspective.first = lookAt;
-		_perspective.second = perspective;
+		_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+		_projection.dir	= glm::vec3(_rotation * glm::vec4(_forward, 0));
 	}
 }
 
-std::pair<glm::mat4, glm::mat4> FreeCamera::Perspective(void)
+const Projection& FreeCamera::Projection(void)
 {
-	return _perspective;
+	return _projection;
 }

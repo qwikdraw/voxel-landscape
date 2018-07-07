@@ -3,6 +3,14 @@
 #include "voxel.hpp"
 #include "Window.hpp"
 
+struct	Projection
+{
+	glm::mat4 lookAt;
+	glm::mat4 perspective;
+	glm::vec3 position;
+	glm::vec3 dir;
+};
+
 class	FreeCamera
 {
 	static glm::vec3 constexpr _basePos = {0, 0, 0};
@@ -17,7 +25,7 @@ class	FreeCamera
 	float _near;
 	float _far;
 	float _fov;
-	std::pair<glm::mat4, glm::mat4> _perspective;
+	Projection _projection;
 
 	void	relativeMove(glm::vec3 amount);
 	
@@ -26,5 +34,5 @@ public:
 	FreeCamera(Window& window);
 	
 	void	Update(void);
-	std::pair<glm::mat4, glm::mat4> Perspective(void);
+	const Projection& Projection(void);
 };

@@ -19,22 +19,22 @@ Landscape::Landscape(std::function<bool(glm::vec3)> f) : _formula(f)
 	}
 }
 
-static bool	within_view(glm::vec3& pos, glm::vec3& dir, glm::vec3& chunkpos)
+static bool	within_view(const glm::vec3& pos, const glm::vec3& dir, const glm::vec3& chunkpos)
 {
 
 	glm::vec3 v = chunkpos - pos;
 	float dist = glm::length(v);
 
-//	if (dist < 110)
-//		return true;	
-//	if (glm::dot(dir, v) > 0)
-//		return false;
+	if (dist < 110)
+		return true;	
+	if (glm::dot(dir, v) > 0)
+		return false;
 	if (dist > 300)
 		return false;
 	return true;
 }
 
-std::vector<Chunk*>	Landscape::ChunksToRender(glm::vec3 pos, glm::vec3 dir)
+std::vector<Chunk*>	Landscape::ChunksToRender(const glm::vec3& pos, const glm::vec3& dir)
 {
 	std::vector<Chunk*> out;
 
@@ -59,31 +59,13 @@ std::vector<Chunk*>	Landscape::ChunksToRender(glm::vec3 pos, glm::vec3 dir)
 	return out;
 }
 
-void	Landscape::Render(std::pair<glm::mat4, glm::mat4> perspective)
+void	Landscape::Render(const Projection& projection)
 {
-	glm::vec3 pos = {glm::value_ptr(perspective.first)[12],
-			 glm::value_ptr(perspective.first)[13],
-			 glm::value_ptr(perspective.first)[14]};
-
-	std::cout << "matrix" << std::endl;
-	for (int i = 0; i < 16; i++)
-	{
-		if (i % 4 == 0)
-			std::cout << std::endl;
-		std::cout << glm::value_ptr(perspective.first)[i] << " ";
-	}
-	std::cout << std::endl << std::endl;
-	
-	glm::vec3 dir = {-glm::value_ptr(perspective.first)[8],
-			 -glm::value_ptr(perspective.first)[9],
-			 -glm::value_ptr(perspective.first)[10]};
-	
-	std::vector<Chunk*> renderList = ChunksToRender(pos, dir);
+	std::vector<Chunk*> renderList = ChunksToRender(projection.position, projection.dir);
 
 	for (Chunk *chunk : renderList)
 	{
-		chunk->UsePerspective(perspective);
-		chunk->Render();
+		chunk->Render(projection);
 	}
 
 }

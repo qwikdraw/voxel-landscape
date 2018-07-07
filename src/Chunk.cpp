@@ -144,8 +144,6 @@ Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
 		     GL_STATIC_DRAW);
 
 	std::cout << _totalCubes << std::endl;
-
-	SetTransform(glm::mat4(1));
 }
 
 void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm::vec3 center)
@@ -178,20 +176,24 @@ void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm:
 	}
 }
 
-void	Chunk::SetTransform(glm::mat4 m)
+void	Chunk::useTransform(const glm::mat4& m)
 {
 	glUniformMatrix4fv(_transformID, 1, GL_FALSE, glm::value_ptr(m));
 }
 
-void	Chunk::UsePerspective(std::pair<glm::mat4, glm::mat4> p)
+void	Chunk::useProjection(const Projection& projection)
 {
-	glUniformMatrix4fv(_lookAtID, 1, GL_FALSE, glm::value_ptr(p.first));
-	glUniformMatrix4fv(_projectionID, 1, GL_FALSE, glm::value_ptr(p.second));
+	glUniformMatrix4fv(_lookAtID, 1, GL_FALSE, glm::value_ptr(projection.lookAt));
+	glUniformMatrix4fv(_projectionID, 1, GL_FALSE, glm::value_ptr(projection.perspective));
 }
 
-void	Chunk::Render(void)
+void	Chunk::Render(const Projection& projection, const glm::mat4& transform)
 {
 	_program->Use();
+	
+	useProjection(projection);
+	useTransform(transform);
+	
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);

@@ -2,6 +2,7 @@
 
 #include "OcTree.hpp"
 #include "ShadingProgram.hpp"
+#include "FreeCamera.hpp"
 
 class	Chunk
 {
@@ -24,12 +25,12 @@ class	Chunk
 	GLuint _transformID;
 
 	void	getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm::vec3 center);
+	void	useTransform(const glm::mat4& m);
+	void	useProjection(const Projection& projection);
 	
 public:
 
 	Chunk(glm::vec3 pos, OcTree *data, size_t detail_level);
 
-	void	SetTransform(glm::mat4);
-	void	UsePerspective(std::pair<glm::mat4, glm::mat4>);
-	void	Render(void);
+	void	Render(const Projection& projection, const glm::mat4& transform = glm::mat4(1));
 };
