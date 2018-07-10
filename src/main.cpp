@@ -7,7 +7,7 @@
 
 static bool	sphere(glm::vec3 p)
 {
-	if (p.x + p.y + p.z < p.y * p.y - p.z * p.x + 2 * p.y * p.x)
+	if (glm::length(glm::mod(p, 100.0f) - glm::vec3(50.0f)) < 40.0f)
 		return true;
 	return false;
 }
@@ -22,11 +22,13 @@ int	main(void)
 	glClearColor(0.2, 0.25, 0.3, 1);
 
 	FreeCamera cam(window);
+	Time clock;
 	
 	while (!window.ShouldClose())
 	{
+		clock.Step();
 		window.Clear();
-		cam.Update();
+		cam.Update(clock.Delta());
 		l.Render(cam.Projection());
 		fps.Render();
 		glFinish();

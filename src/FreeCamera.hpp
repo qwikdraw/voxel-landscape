@@ -19,7 +19,6 @@ class	FreeCamera
 
 	Window& _window;
 	
-	glm::vec3 _position;
 	glm::mat4 _rotation;
 	float _aspect;
 	float _near;
@@ -27,12 +26,12 @@ class	FreeCamera
 	float _fov;
 	Projection _projection;
 
-	void	relativeMove(glm::vec3 amount);
+	void	relativeMove(glm::vec3 amount, double dt);
 	
 public:
 
 	FreeCamera(Window& window);
 	
-	void	Update(void);
+	void	Update(double dt);
 	const Projection& Projection(void);
 };

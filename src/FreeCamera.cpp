@@ -13,7 +13,7 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 	_far = 512;
 	_fov = 80;
 
-        glm::mat4 translate = glm::translate(_position);
+    glm::mat4 translate = glm::translate(_projection.position);
 	_projection.lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
 				       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
 				       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
@@ -21,64 +21,65 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 	_projection.dir = glm::vec3(_rotation * glm::vec4(_forward, 0));
 }
 
-void	FreeCamera::relativeMove(glm::vec3 amount)
+void	FreeCamera::relativeMove(glm::vec3 amount, double dt)
 {
 	glm::vec3 absolute = glm::vec3(_rotation * glm::vec4(amount, 0));
-	_projection.position += absolute;
+	_projection.position += absolute * dt * 20;
 }
 
-void	FreeCamera::Update(void)
+void	FreeCamera::Update(double dt)
 {
 	bool moved = false;
-	
+
+	_aspect = _window.GetAspect();
 	if (_window.Key('W'))
 	{
-		relativeMove(_forward);
+		relativeMove(_forward, dt);
 		moved = true;
 	}
 	if (_window.Key('S'))
 	{
-		relativeMove(-_forward);
+		relativeMove(-_forward, dt);
 		moved = true;
 	}
 	if (_window.Key('A'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(90.0f), _up));
+		relativeMove(glm::rotate(_forward, glm::radians(90.0f), _up), dt);
 		moved = true;
 	}
 	if (_window.Key('D'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(-90.0f), _up));
+		relativeMove(glm::rotate(_forward, glm::radians(-90.0f), _up), dt);
 		moved = true;
 	}
 	if (_window.Key('Z'))
 	{
-		relativeMove(_up);
+		relativeMove(_up, dt);
 		moved = true;
 	}
 	if (_window.Key('X'))
 	{
-		relativeMove(-_up);
+		relativeMove(-_up, dt);
 		moved = true;
 	}
 	if (_window.Key(GLFW_KEY_LEFT))
 	{
-		_rotation = glm::rotate(_rotation, glm::radians(1.0f), _up);
+		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), _up);
 		moved = true;
 	}
 	if (_window.Key(GLFW_KEY_RIGHT))
 	{
-		_rotation = glm::rotate(_rotation, glm::radians(-1.0f), _up);
+		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), _up);
 		moved = true;
 	}
 	if (_window.Key(GLFW_KEY_DOWN))
 	{
-		_rotation = glm::rotate(_rotation, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), glm::vec3(0, 1, 0));
 		moved = true;
 	}
 	if (_window.Key(GLFW_KEY_UP))
 	{
-		_rotation = glm::rotate(_rotation, glm::radians(-1.0f), glm::vec3(0, 1, 0));
+		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), glm::vec3(0, 1, 0));
 		moved = true;
 	}
 	

@@ -22,7 +22,7 @@ void	main()
 
 	lightAmount = max( abs( dot(L * vec4(normal, 0), normalize(ray)) ), 0.2);
 
-	col = normalize(abs(trueVertex));
+	col = normalize(fract(sin(pos * 0.21525) * 176.24124));
 
 	mat4 T = projection * L;
 
