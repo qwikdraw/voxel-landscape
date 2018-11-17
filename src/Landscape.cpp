@@ -63,6 +63,7 @@ void	Landscape::updateCenter(glm::ivec3 center)
 			glm::vec3 pos = {(float)p.x - _size.x / 2 + _center.x,
 					 (float)p.y - _size.y / 2,
 					 (float)p.z - _size.z / 2 + _center.z};
+			pos *= 64;
 			_chunkLoader.Add(pos);
 		}
 	});
@@ -130,6 +131,7 @@ void	Landscape::Render(const Projection& projection)
 			glm::vec3 pos = {(float)p.x - _size.x / 2 + _center.x,
 					 (float)p.y - _size.y / 2,
 					 (float)p.z - _size.z / 2 + _center.z};
+			pos *= 64;
 			Chunk *c = _chunkLoader.Get(pos);
 
 			if (c)
@@ -139,4 +141,5 @@ void	Landscape::Render(const Projection& projection)
 			}
 		}
 	});
+	_chunkLoader.DeleteDeadChunks();
 }

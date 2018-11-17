@@ -18,7 +18,7 @@ Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
 {
 	if (!_init)
 	{
-		
+
 	_program = new ShadingProgram("src/chunkVertex.glsl", "", "src/chunkFrag.glsl");
 	_program->Use();
 	_lookAtID = glGetUniformLocation(_program->ID(), "lookAt");
@@ -28,47 +28,47 @@ Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
 					-0.5f,-0.5f,-0.5f,
 					-0.5f,-0.5f, 0.5f,
 					-0.5f, 0.5f, 0.5f,
-						
+
 					0.5f, 0.5f,-0.5f,
 					-0.5f,-0.5f,-0.5f,
 					-0.5f, 0.5f,-0.5f,
-						
+
 					0.5f,-0.5f, 0.5f,
 					-0.5f,-0.5f,-0.5f,
 					0.5f,-0.5f,-0.5f,
-						
+
 					0.5f, 0.5f,-0.5f,
 					0.5f,-0.5f,-0.5f,
 					-0.5f,-0.5f,-0.5f,
-						
+
 					-0.5f,-0.5f,-0.5f,
 					-0.5f, 0.5f, 0.5f,
 					-0.5f, 0.5f,-0.5f,
-						
+
 					0.5f,-0.5f, 0.5f,
 					-0.5f,-0.5f, 0.5f,
 					-0.5f,-0.5f,-0.5f,
-						
+
 					-0.5f, 0.5f, 0.5f,
 					-0.5f,-0.5f, 0.5f,
 					0.5f,-0.5f, 0.5f,
-						
+
 					0.5f, 0.5f, 0.5f,
 					0.5f,-0.5f,-0.5f,
 					0.5f, 0.5f,-0.5f,
-						
+
 					0.5f,-0.5f,-0.5f,
 					0.5f, 0.5f, 0.5f,
 					0.5f,-0.5f, 0.5f,
-						
+
 					0.5f, 0.5f, 0.5f,
 					0.5f, 0.5f,-0.5f,
 					-0.5f, 0.5f,-0.5f,
-						
+
 					0.5f, 0.5f, 0.5f,
 					-0.5f, 0.5f,-0.5f,
 					-0.5f, 0.5f, 0.5f,
-						
+
 					0.5f, 0.5f, 0.5f,
 					-0.5f, 0.5f, 0.5f,
 					0.5f,-0.5f, 0.5f
@@ -141,7 +141,7 @@ Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
 	}
 	// end of init statement
 
-//	getCubes(_tree, 0, detail_level, pos);
+	getCubes(_tree, 0, detail_level, pos);
 }
 
 Chunk::~Chunk(void)
@@ -153,9 +153,6 @@ Chunk::~Chunk(void)
 
 void	Chunk::Load(void)
 {
-
-	getCubes(_tree, 0, 6, _chunkPos);
-	
 	glGenBuffers(1, &_positionID);
         glBindBuffer(GL_ARRAY_BUFFER, _positionID);
         glBufferData(GL_ARRAY_BUFFER,
@@ -169,7 +166,8 @@ void	Chunk::Load(void)
                      _size.size() * sizeof(GLfloat),
                      &_size[0],
                      GL_STATIC_DRAW);
-	std::cout << _chunkPos.x << " " <<  _chunkPos.y << " " <<  _chunkPos.z << std::endl;
+
+	assert(_pos.size() == _size.size() * 3);
 }
 
 void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm::vec3 center)
@@ -182,13 +180,18 @@ void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm:
 						 { 0.5, -0.5, -0.5},
 						 {-0.5, -0.5,  0.5},
 						 { 0.5, -0.5,  0.5}};
-	
+
 	if (!tree->branch[0] || depth_level == detail_level)
 	{
 		if (tree->data)
 		{
 			_pos.insert(_pos.end(), &center[0], &center[0] + 3);
 			_size.push_back((unsigned)64 >> depth_level);
+			if (((unsigned)64 >> depth_level) < 0 || ((unsigned)64 >> depth_level) > 64)
+			{
+				std::cout << (unsigned(64) >> depth_level) << " error" << std::endl;
+				exit(1);
+			}
 			_totalCubes++;
 		}
 		return;
@@ -216,14 +219,14 @@ void	Chunk::useProjection(const Projection& projection)
 void	Chunk::Render(const Projection& projection, const glm::mat4& transform)
 {
 	_program->Use();
-	
+
 	useProjection(projection);
 	useTransform(transform);
-	
+
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	
+
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, _cubeVertexID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);

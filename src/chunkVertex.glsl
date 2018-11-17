@@ -14,7 +14,7 @@ out	vec3 col;
 
 void	main()
 {
-	vec3 trueVertex = vertex * size + pos;
+	vec3 trueVertex = vertex * 1 + pos;
 	mat4 L = lookAt;
 
 	vec4 ray = L * vec4(trueVertex, 1);

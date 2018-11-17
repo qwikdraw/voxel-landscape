@@ -24,11 +24,14 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 void	FreeCamera::relativeMove(glm::vec3 amount, double dt)
 {
 	glm::vec3 absolute = glm::vec3(_rotation * glm::vec4(amount, 0));
-	_projection.position += absolute * dt * 20;
+	_projection.position += absolute * dt * 10;
 }
 
 void	FreeCamera::Update(double dt)
 {
+	std::cout << "cam pos: ";
+	std::cout << _projection.position.x << " " << _projection.position.y << " " << _projection.position.z
+		  << std::endl;
 	bool moved = false;
 
 	_aspect = _window.GetAspect();
@@ -82,7 +85,7 @@ void	FreeCamera::Update(double dt)
 		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), glm::vec3(0, 1, 0));
 		moved = true;
 	}
-	
+
 	if (moved)
 	{
 		glm::mat4 translate = glm::translate(_projection.position);

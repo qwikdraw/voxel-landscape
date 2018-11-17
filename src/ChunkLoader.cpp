@@ -38,15 +38,14 @@ void	ChunkLoader::chunkCreator(int threadNum)
 		}
 		glm::vec3 pos = _waitingChunks.front();
 		_waitingChunks.pop();
-		std::cout << "pos: " << pos.x << " " << pos.y << " " << pos.z << std::endl;
 		_mutex[0].unlock();
 
 		OcTree *tree = OcTree::Generate64(_formula, pos);
 		Chunk *c = new Chunk(pos, tree, 6);
-		
+
 		_mutex[1].lock();
 		if (_threadClean[threadNum])
-			delete c;
+			_chunksToFree.push_back(c);
 		else
 			_loadedChunks[map_key(pos)] = c;
 		_mutex[1].unlock();
@@ -78,10 +77,21 @@ void	ChunkLoader::Clear(void)
 {
 	_mutex[1].lock();
 	for (auto const& p : _loadedChunks)
-		delete p.second;
+		_chunksToFree.push_back(p.second);
 	_loadedChunks.clear();
 	_waitingChunks = std::queue<glm::vec3>();
 	for (int i = 0; i < 4; i++)
 		_threadClean[i] = true;
+	_mutex[1].unlock();
+}
+
+void	ChunkLoader::DeleteDeadChunks(void)
+{
+	if (_chunksToFree.empty())
+		return;
+	delete _chunksToFree.front();
+
+	_mutex[1].lock();
+	_chunksToFree.pop_front();
 	_mutex[1].unlock();
 }
