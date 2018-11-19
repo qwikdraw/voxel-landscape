@@ -1,6 +1,6 @@
 #pragma once
 
-#include "voxel.hpp"
+#include "util_inc.hpp"
 #include "Window.hpp"
 
 struct	Projection

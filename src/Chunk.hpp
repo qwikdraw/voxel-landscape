@@ -1,49 +1,93 @@
 #pragma once
 
-#include "OcTree.hpp"
 #include "ShadingProgram.hpp"
-#include "FreeCamera.hpp"
-#include <mutex>
+#include "util_inc.hpp"
 
-class	Chunk
+// defines a 1 x (top - bot) x 1 cuboid with undefined x, z locations
+struct Column
 {
-	static std::mutex _mutex;
-	static bool _init;
-	static ShadingProgram *_program;
+    int top;
+    int bot;
+};
 
-	OcTree *_tree;
-	glm::vec3 _chunkPos;
-	static std::vector<float> _cubeVertices;
-	static std::vector<float> _cubeNormals;
-	std::vector<float> _pos;
-	std::vector<float> _size;
-	int _totalCubes;
+// each pair specifies a start and end height for the land.
+// follows following rules:
+// vector[i].bot > vector[i - 1].top
+// vector[i].top > vector[i].bot
+// vector[i].top <= 256
+// vector[i].bot >= 0
+typedef std::vector<Column> land_section_t;
 
-	static GLuint _cubeVertexID;
-	static GLuint _cubeNormalID;
-	GLuint _positionID;
-	GLuint _sizeID;
+// The size is 66 because a chunk is 64x64 and we need 1 block of
+// context around the edges (a border) to generate the chunk
+typedef std::array<std::array<land_section_t, 66>, 66> land_map_t;
 
-	static GLuint _lookAtID;
-	static GLuint _projectionID;
-	static GLuint _transformID;
+land_map_t terrain_gen(glm::ivec2 pos);
 
-	void	getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm::vec3 center);
-	void	useTransform(const glm::mat4& m);
-	void	useProjection(const Projection& projection);
+// a chunk has dimensions of 64x64x256
+class Chunk
+{
+    static constexpr const char* _vertexPath = "src/voxel_vert.glsl";
+    static constexpr const char* _fragPath = "src/voxel_frag.glsl";
+
+    static ShadingProgram *_program;
+    static GLuint _viewID;
+    static GLuint _posID;
+    static GLuint _texID;
+    static GLuint _texLocID;
+
+    // array of vertices
+    std::vector<glm::vec3> _triangles;
+
+    // 1 uv per vertex
+    std::vector<glm::vec2> _uvs;
+
+    // 1 normal per vertex
+    std::vector<glm::vec3> _normals;
+
+    // IDs to the OpenGL array buffers
+    GLuint _trianglesID;
+    GLuint _uvsID;
+    GLuint _normalsID;
+
+    // vertex array object
+    GLuint _VAO;
+
+    glm::ivec2 _pos;
+
+    void _loadArrayBuffers();
+    void _loadTexture();
+    void _makeVAO();
+
+    // adds rectangle to the _triangles, _uvs, _normals.
+    // dot(height, width) == 0.
+    void _addRectangle(glm::vec3 center, glm::vec3 height, glm::vec3 width);
+
+    // creates a naive mesh for the column
+    void _columnToMesh(Column, float x, float z);
+
+    // fill the _triangles, _uvs and _normals
+    void _createMesh(const land_map_t&);
 
 public:
 
-	// the first time you create this object it must be inside the main thread
-	Chunk(glm::vec3 pos, OcTree *data, size_t detail_level);
+    // creates a chunk that spans: pos - vec2(32) to pos + vec2(32)
+    // and has height from 0 - 256
+    // contains no OpenGL calls and so can be called on any thread
+    Chunk(glm::ivec2 pos);
 
-	~Chunk(void);
+    // call this method to initialize shading program and potentially
+    // other things in future
+    static void Init();
 
-	// the stuff that should have been in the constructor but contained
-	// OpenGL functions and so didn't allow creation of Chunk object in
-	// seperate threads. Call Load() only in the main thread.
-	void	Load(void);
+    // the stuff that should have been in the constructor but contained
+    // OpenGL functions and so didn't allow creation of Chunk object in
+    // seperate threads. Call Load() only in the main thread.
+    void Load();
 
-	void	Render(const Projection& projection, const glm::mat4& transform = glm::mat4(1));
-	const glm::vec3&	Pos(void);
+    // must be called on main thread.
+    void Unload();
+
+    // render vector of chunks with view matrix (projection * lookat)
+    static void Render(const glm::mat4& view, const std::vector<Chunk>&);
 };

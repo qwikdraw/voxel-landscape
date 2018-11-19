@@ -1,7 +1,6 @@
 #pragma once
 
-#include "voxel.hpp"
-#include <glm/vec2.hpp>
+#include "util_inc.hpp"
 
 void	KeyCallback(GLFWwindow*, int key, int, int action, int);
 void	MouseButtonCallback(GLFWwindow*, int button, int action, int);
@@ -64,7 +63,7 @@ public:
 
 	//! Closes the window.
 	void	Close(void);
-	
+
 	//! Set a rendering stencil.
 	/*! Specify the area of the window you wish to draw to. (x, y) is the coordinate of the bottom left part
 	of the rectangle you wish to draw to. Width and height define the rectangle that will be drawable with
@@ -81,7 +80,7 @@ public:
 
 	//! Clears render zone with the current glClearColor.
 	void	Clear(void);
-	
+
 	//! Renders entire window, call once per frame.
 	void	Render(void);
 

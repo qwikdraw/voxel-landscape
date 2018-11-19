@@ -2,42 +2,31 @@
 
 ShadingProgram::ShadingProgram(void) {}
 
-ShadingProgram::ShadingProgram(std::string vp, std::string gp, std::string fp)
+ShadingProgram::ShadingProgram(std::string vp, std::string fp)
 {
 	std::string shader;
 	GLuint shader_id;
 	const GLchar *source;
-	
+
 	_program = glCreateProgram();
-	
+
 	shader = GetShaderCode(vp);
-	shader_id = glCreateShader(GL_VERTEX_SHADER);	
-	source = shader.c_str();	
+	shader_id = glCreateShader(GL_VERTEX_SHADER);
+	source = shader.c_str();
 	glShaderSource(shader_id, 1, &source, nullptr);
 	glCompileShader(shader_id);
-	CheckCompilation(shader_id, vp);	
+	CheckCompilation(shader_id, vp);
 	glAttachShader(_program, shader_id);
 
-	if (!gp.empty())
-	{
-		shader = GetShaderCode(gp);
-		shader_id = glCreateShader(GL_GEOMETRY_SHADER);		
-		source = shader.c_str();		
-		glShaderSource(shader_id, 1, &source, nullptr);
-		glCompileShader(shader_id);
-		CheckCompilation(shader_id, gp);
-		glAttachShader(_program, shader_id);
-	}
-
 	shader = GetShaderCode(fp);
-	shader_id = glCreateShader(GL_FRAGMENT_SHADER);	
-	source = shader.c_str();	
+	shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+	source = shader.c_str();
 	glShaderSource(shader_id, 1, &source, nullptr);
 	glCompileShader(shader_id);
 	CheckCompilation(shader_id, fp);
 	glAttachShader(_program, shader_id);
 	glLinkProgram(_program);
-//	CheckLinking();
+	CheckLinking();
 }
 
 std::string	ShadingProgram::GetShaderCode(std::string filepath)
@@ -50,7 +39,7 @@ std::string	ShadingProgram::GetShaderCode(std::string filepath)
 	}
 	std::stringstream buf;
 	buf << fileStream.rdbuf();
-	return buf.str();	
+	return buf.str();
 }
 
 void	ShadingProgram::CheckCompilation(GLuint id, std::string path)
@@ -62,9 +51,9 @@ void	ShadingProgram::CheckCompilation(GLuint id, std::string path)
 	if (success == GL_FALSE)
 	{
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logsize);
-		
+
 		char *log = new char[logsize];
-		
+
 		glGetShaderInfoLog(id, logsize, nullptr, log);
 		std::cerr << std::endl << log << std::endl
 			  << "from: " << path << std::endl << std::endl;
@@ -76,17 +65,16 @@ void	ShadingProgram::CheckLinking(void)
 	GLint success = 0;
 	GLint logsize;
 
-	glGetShaderiv(_program, GL_LINK_STATUS, &success);
+	glGetProgramiv(_program, GL_LINK_STATUS, &success);
 	if (success == GL_FALSE)
 	{
-		glGetShaderiv(_program, GL_INFO_LOG_LENGTH, &logsize);
+		glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &logsize);
 
 		char *log = new char[logsize];
 
-		glGetShaderInfoLog(_program, logsize, nullptr, log);
-		std::cerr << std::endl << log << std::endl
-			  << "from: " << "path" << std::endl << std::endl;
-	}	
+		glGetProgramInfoLog(_program, logsize, nullptr, log);
+		std::cerr << "there was a linking error:" << std::endl << log << std::endl;
+	}
 }
 
 void	ShadingProgram::Use(void)

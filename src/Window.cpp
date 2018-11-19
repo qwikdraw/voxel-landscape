@@ -30,9 +30,6 @@ Window::Window(int width, int height, std::string name) :
 	glfwMakeContextCurrent(_window);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
-	glGenVertexArrays(1, &vertex_array_id);
-	glBindVertexArray(vertex_array_id);
 }
 
 void	Window::WindowHints(void)
@@ -58,7 +55,7 @@ void	Window::GetMaxRenderSize(float &width, float &height)
 	int iwidth, iheight;
 
 	glfwGetFramebufferSize(_window, &iwidth, &iheight);
-	
+
 	width = static_cast<float>(iwidth);
 	height = static_cast<float>(iheight);
 }
@@ -99,12 +96,12 @@ void	Window::SetRenderMask(float x, float y, float width, float height)
 	_height = height;
 	_screenCornerX = x;
 	_screenCornerY = y;
-	
+
 	GetMaxRenderSize(windowWidth, windowHeight);
 	glEnable(GL_SCISSOR_TEST);
 	glViewport(windowWidth * x,
 		   windowHeight * y,
-		   windowWidth * width,		
+		   windowWidth * width,
 		   windowHeight * height);
 	glScissor(windowWidth * x,
 		  windowHeight * y,
@@ -174,7 +171,7 @@ GLFWwindow* Window::GetGLWindow(void)
 void	KeyCallback(GLFWwindow *glfwWindow, int key, int, int action, int)
 {
 	Window *window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfwWindow));
-	
+
 	if (action == GLFW_PRESS)
 	{
 		window->_keys[key] = true;
@@ -194,7 +191,7 @@ bool Window::Key(int key)
 void	MouseButtonCallback(GLFWwindow *glfwWindow, int button, int action, int)
 {
 	Window *window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfwWindow));
-	
+
 	if (action == GLFW_PRESS)
 	{
 		window->_mouseButtons[button] = true;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "voxel.hpp"
+#include "util_inc.hpp"
 
 class	ShadingProgram
 {
@@ -13,9 +13,9 @@ private:
 	std::string	GetShaderCode(std::string filepath);
 	void	CheckCompilation(GLuint, std::string filepath);
 	void	CheckLinking(void);
-	
+
 public:
-	ShadingProgram(std::string vertexPath, std::string geoPath, std::string fragPath);
+	ShadingProgram(std::string vertexPath, std::string fragPath);
 	void	Use(void);
 	GLuint	ID(void);
 };

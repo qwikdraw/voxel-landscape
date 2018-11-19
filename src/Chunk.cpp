@@ -1,266 +1,258 @@
 #include "Chunk.hpp"
 
-std::mutex		Chunk::_mutex;
-ShadingProgram		*Chunk::_program;
-std::vector<float>	Chunk::_cubeVertices;
-std::vector<float>	Chunk::_cubeNormals;
-GLuint			Chunk::_cubeVertexID;
-GLuint			Chunk::_cubeNormalID;
-GLuint			Chunk::_lookAtID;
-GLuint			Chunk::_projectionID;
-GLuint			Chunk::_transformID;
-bool			Chunk::_init = false;
+ShadingProgram* Chunk::_program;
+GLuint Chunk::_viewID;
+GLuint Chunk::_posID;
+GLuint Chunk::_texID;
+GLuint Chunk::_texLocID;
 
-
-Chunk::Chunk(glm::vec3 pos, OcTree *tree, size_t detail_level) : _tree(tree),
-								 _chunkPos(pos),
-								 _totalCubes(0)
+// 0 <= a, b <= 1
+static land_section_t section_gen(float a, float b)
 {
-	if (!_init)
-	{
+    if (a < 0 || b < 0 || a > 1 || b > 1)
+        throw std::runtime_error("input must be between 0 and 1");
 
-	_program = new ShadingProgram("src/chunkVertex.glsl", "", "src/chunkFrag.glsl");
-	_program->Use();
-	_lookAtID = glGetUniformLocation(_program->ID(), "lookAt");
-	_projectionID = glGetUniformLocation(_program->ID(), "projection");
-	_transformID = glGetUniformLocation(_program->ID(), "transform");
-	_cubeVertices.insert(_cubeVertices.end(), {
-					-0.5f,-0.5f,-0.5f,
-					-0.5f,-0.5f, 0.5f,
-					-0.5f, 0.5f, 0.5f,
+    float height = 100 + 156 * a;
+    float cavern_begin = 10 + 128 * a;
+    float cavern_end = 256 * b;
 
-					0.5f, 0.5f,-0.5f,
-					-0.5f,-0.5f,-0.5f,
-					-0.5f, 0.5f,-0.5f,
+    land_section_t out;
 
-					0.5f,-0.5f, 0.5f,
-					-0.5f,-0.5f,-0.5f,
-					0.5f,-0.5f,-0.5f,
-
-					0.5f, 0.5f,-0.5f,
-					0.5f,-0.5f,-0.5f,
-					-0.5f,-0.5f,-0.5f,
-
-					-0.5f,-0.5f,-0.5f,
-					-0.5f, 0.5f, 0.5f,
-					-0.5f, 0.5f,-0.5f,
-
-					0.5f,-0.5f, 0.5f,
-					-0.5f,-0.5f, 0.5f,
-					-0.5f,-0.5f,-0.5f,
-
-					-0.5f, 0.5f, 0.5f,
-					-0.5f,-0.5f, 0.5f,
-					0.5f,-0.5f, 0.5f,
-
-					0.5f, 0.5f, 0.5f,
-					0.5f,-0.5f,-0.5f,
-					0.5f, 0.5f,-0.5f,
-
-					0.5f,-0.5f,-0.5f,
-					0.5f, 0.5f, 0.5f,
-					0.5f,-0.5f, 0.5f,
-
-					0.5f, 0.5f, 0.5f,
-					0.5f, 0.5f,-0.5f,
-					-0.5f, 0.5f,-0.5f,
-
-					0.5f, 0.5f, 0.5f,
-					-0.5f, 0.5f,-0.5f,
-					-0.5f, 0.5f, 0.5f,
-
-					0.5f, 0.5f, 0.5f,
-					-0.5f, 0.5f, 0.5f,
-					0.5f,-0.5f, 0.5f
-					});
-
-	_cubeNormals.insert(_cubeNormals.end(), {
-				-1, 0, 0,
-				-1, 0, 0,
-				-1, 0, 0,
-
-				0, 0, -1,
-				0, 0, -1,
-				0, 0, -1,
-
-				0, -1, 0,
-				0, -1, 0,
-				0, -1, 0,
-
-				0, 0, -1,
-				0, 0, -1,
-				0, 0, -1,
-
-				-1, 0, 0,
-				-1, 0, 0,
-				-1, 0, 0,
-
-				0, -1, 0,
-				0, -1, 0,
-				0, -1, 0,
-
-				0, 0, 1,
-				0, 0, 1,
-				0, 0, 1,
-
-				1, 0, 0,
-				1, 0, 0,
-				1, 0, 0,
-
-				1, 0, 0,
-				1, 0, 0,
-				1, 0, 0,
-
-				0, 1, 0,
-				0, 1, 0,
-				0, 1, 0,
-
-				0, 1, 0,
-				0, 1, 0,
-				0, 1, 0,
-
-				0, 0, 1,
-				0, 0, 1,
-				0, 0, 1
-
-		});
-	glGenBuffers(1, &_cubeVertexID);
-	glBindBuffer(GL_ARRAY_BUFFER, _cubeVertexID);
-	glBufferData(GL_ARRAY_BUFFER,
-		     _cubeVertices.size() * sizeof(GLfloat),
-		     &_cubeVertices[0],
-		     GL_STATIC_DRAW);
-
-	glGenBuffers(1, &_cubeNormalID);
-	glBindBuffer(GL_ARRAY_BUFFER, _cubeNormalID);
-	glBufferData(GL_ARRAY_BUFFER,
-		     _cubeNormals.size() * sizeof(GLfloat),
-		     &_cubeNormals[0],
-		     GL_STATIC_DRAW);
-	_init = true;
-	}
-	// end of init statement
-
-	getCubes(_tree, 0, detail_level, pos);
+    // if there is no cavern
+    if (int(cavern_end) <= int(cavern_begin))
+        out.push_back(Column{int(height), 0});
+    else
+    {
+        out.push_back(Column{int(cavern_begin), 0});
+        if (int(cavern_end) < int(height))
+            out.push_back(Column{int(height), int(cavern_end)});
+    }
+    return out;
 }
 
-Chunk::~Chunk(void)
+land_map_t terrain_gen(glm::ivec2 pos)
 {
-	glDeleteBuffers(1, &_positionID);
-	glDeleteBuffers(1, &_sizeID);
-	delete _tree;
+    // 66 because 64x64 grid + border on index 0 and 65
+    float noise_1[66][66];
+    float noise_2[66][66];
+
+    for (size_t x = 0; x < 66; x++)
+    {
+        for (size_t z = 0; z < 66; z++)
+        {
+            noise_1[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos) / 133.37);
+            noise_2[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos +
+                                        glm::ivec2(444, 124) /* random offset */) / 133.37);
+        }
+    }
+    land_map_t landmap;
+    for (size_t x = 0; x < 66; x++)
+        for (size_t z = 0; z < 66; z++)
+            landmap[x][z] = section_gen((noise_1[x][z] + 1.0) / 2.0, (noise_2[x][z] + 1.0) / 2.0);
+    return landmap;
 }
 
-void	Chunk::Load(void)
+void Chunk::_loadArrayBuffers()
 {
-	glGenBuffers(1, &_positionID);
-        glBindBuffer(GL_ARRAY_BUFFER, _positionID);
-        glBufferData(GL_ARRAY_BUFFER,
-                     _pos.size() * sizeof(GLfloat),
-                     &_pos[0],
-                     GL_STATIC_DRAW);
+    glGenBuffers(1, &_trianglesID);
+    glGenBuffers(1, &_uvsID);
+    glGenBuffers(1, &_normalsID);
 
-        glGenBuffers(1, &_sizeID);
-        glBindBuffer(GL_ARRAY_BUFFER, _sizeID);
-        glBufferData(GL_ARRAY_BUFFER,
-                     _size.size() * sizeof(GLfloat),
-                     &_size[0],
-                     GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, _trianglesID);
+    glBufferData(GL_ARRAY_BUFFER,
+                _triangles.size() * 3 * sizeof(GLfloat),
+                _triangles.data(),
+                GL_STATIC_DRAW);
 
-	assert(_pos.size() == _size.size() * 3);
+    glBindBuffer(GL_ARRAY_BUFFER, _uvsID);
+    glBufferData(GL_ARRAY_BUFFER,
+                _uvs.size() * 2 * sizeof(GLfloat),
+                _uvs.data(),
+                GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _normalsID);
+    glBufferData(GL_ARRAY_BUFFER,
+                _normals.size() * 3 * sizeof(GLfloat),
+                _normals.data(),
+                GL_STATIC_DRAW);
 }
 
-void	Chunk::getCubes(OcTree *tree, size_t depth_level, size_t detail_level, glm::vec3 center)
+void Chunk::_loadTexture()
 {
-	static constexpr glm::vec3 offsets[8] = {{-0.5,  0.5, -0.5},
-						 { 0.5,  0.5, -0.5},
-						 {-0.5,  0.5,  0.5},
-						 { 0.5,  0.5,  0.5},
-						 {-0.5, -0.5, -0.5},
-						 { 0.5, -0.5, -0.5},
-						 {-0.5, -0.5,  0.5},
-						 { 0.5, -0.5,  0.5}};
+    // this entire function will be replaced when we get actual texture loading
+    // but for now it should display a checkerboard
+    size_t width = 2;
+    size_t height = 2;
+    unsigned char data[] = {255, 255, 255, 255, 100, 100, 100, 255,
+                            100, 100, 100, 255, 255, 255, 255, 255};
 
-	if (!tree->branch[0] || depth_level == detail_level)
-	{
-		if (tree->data)
-		{
-			_pos.insert(_pos.end(), &center[0], &center[0] + 3);
-			_size.push_back((unsigned)64 >> depth_level);
-			if (((unsigned)64 >> depth_level) < 0 || ((unsigned)64 >> depth_level) > 64)
-			{
-				std::cout << (unsigned(64) >> depth_level) << " error" << std::endl;
-				exit(1);
-			}
-			_totalCubes++;
-		}
-		return;
-	}
-	for (size_t i = 0; i < 8; i++)
-	{
-		getCubes(tree->branch[i],
-			 depth_level + 1,
-			 detail_level,
-			 center + offsets[i] * (float)((unsigned)64 >> (depth_level + 1)));
-	}
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glGenTextures(1, &_texID);
+	glBindTexture(GL_TEXTURE_2D, _texID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGBA,
+		     width,
+		     height,
+		     0,
+		     GL_RGBA,
+		     GL_UNSIGNED_BYTE,
+		     data);
 }
 
-void	Chunk::useTransform(const glm::mat4& m)
+void Chunk::_makeVAO()
 {
-	glUniformMatrix4fv(_transformID, 1, GL_FALSE, glm::value_ptr(m));
+    glGenVertexArrays(1, &_VAO);
+    glBindVertexArray(_VAO);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, _trianglesID);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, _uvsID);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalsID);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glBindVertexArray(0);
 }
 
-void	Chunk::useProjection(const Projection& projection)
+void Chunk::_addRectangle(glm::vec3 center, glm::vec3 height, glm::vec3 width)
 {
-	glUniformMatrix4fv(_lookAtID, 1, GL_FALSE, glm::value_ptr(projection.lookAt));
-	glUniformMatrix4fv(_projectionID, 1, GL_FALSE, glm::value_ptr(projection.perspective));
+    if (glm::length(height) == 0 || glm::length(width) == 0)
+        throw std::runtime_error("width or height should not be 0");
+
+    glm::vec3 corner1 = center + height / 2.0 + width / 2.0;
+    glm::vec3 corner2 = center - height / 2.0 + width / 2.0;
+    glm::vec3 corner3 = center - height / 2.0 - width / 2.0;
+    glm::vec3 corner4 = center + height / 2.0 - width / 2.0;
+
+    glm::vec3 normal = glm::cross(height, width);
+
+    glm::vec2 uv1 = glm::vec2(1, 1);
+    glm::vec2 uv2 = glm::vec2(1, 0);
+    glm::vec2 uv3 = glm::vec2(0, 0);
+    glm::vec2 uv4 = glm::vec2(0, 1);
+
+    // triangle 1
+    _triangles.push_back(corner1);
+    _triangles.push_back(corner2);
+    _triangles.push_back(corner3);
+
+    _normals.push_back(normal);
+    _normals.push_back(normal);
+    _normals.push_back(normal);
+
+    _uvs.push_back(uv1);
+    _uvs.push_back(uv2);
+    _uvs.push_back(uv3);
+
+    // triangle 2
+    _triangles.push_back(corner3);
+    _triangles.push_back(corner4);
+    _triangles.push_back(corner1);
+
+    _normals.push_back(normal);
+    _normals.push_back(normal);
+    _normals.push_back(normal);
+
+    _uvs.push_back(uv3);
+    _uvs.push_back(uv4);
+    _uvs.push_back(uv1);
 }
 
-void	Chunk::Render(const Projection& projection, const glm::mat4& transform)
+void Chunk::_columnToMesh(Column col, float x, float z)
 {
-	_program->Use();
-
-	useProjection(projection);
-	useTransform(transform);
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, _cubeVertexID);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, _cubeNormalID);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, _positionID);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glEnableVertexAttribArray(3);
-	glBindBuffer(GL_ARRAY_BUFFER, _sizeID);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glVertexAttribDivisor(0, 0);
-	glVertexAttribDivisor(1, 0);
-	glVertexAttribDivisor(2, 1);
-	glVertexAttribDivisor(3, 1);
-
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 36, _totalCubes);
-
-	glVertexAttribDivisor(2, 0);
-	glVertexAttribDivisor(3, 0);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(3);
-
+    // top face
+    _addRectangle(glm::vec3(x, col.top, z),
+                glm::vec3(0, 0, -1),
+                glm::vec3(1, 0, 0));
+    // bot face
+    _addRectangle(glm::vec3(x, col.bot, z),
+                glm::vec3(0, 0, 1),
+                glm::vec3(1, 0, 0));
+    // front face
+    _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z + 0.5),
+                glm::vec3(-1, 0, 0),
+                glm::vec3(0, col.top - col.bot, 0));
+    // back face
+    _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z - 0.5),
+                glm::vec3(1, 0, 0),
+                glm::vec3(0, col.top - col.bot, 0));
+    // right face
+    _addRectangle(glm::vec3(x + 0.5, (col.bot + col.top) / 2.0, z),
+                glm::vec3(0, 0, 1),
+                glm::vec3(0, col.top - col.bot, 0));
+    // left face
+    _addRectangle(glm::vec3(x - 0.5, (col.bot + col.top) / 2.0, z),
+                glm::vec3(0, 0, -1),
+                glm::vec3(0, col.top - col.bot, 0));
 }
 
-const glm::vec3&	Chunk::Pos(void)
+void Chunk::_createMesh(const land_map_t& map)
 {
-	return _chunkPos;
+    // indices 0 and 65 are part of the border, so for this simple
+    // algo we jsut ignore them. They should be used later
+    for (size_t x = 1; x < 65; x++)
+        for (size_t z = 1; z < 65; z++)
+            for (auto col : map[x][z])
+                // subtract 32.5 becasue cube centers range from -31.5 to 31.5
+                _columnToMesh(col, float(x) - 32.5, float(z) - 32.5);
+}
+
+Chunk::Chunk(glm::ivec2 pos)
+{
+    _pos = pos;
+    land_map_t map = terrain_gen(pos);
+    _createMesh(map);
+}
+
+void Chunk::Unload()
+{
+    glDeleteBuffers(1, &_trianglesID);
+    glDeleteBuffers(1, &_uvsID);
+    glDeleteBuffers(1, &_normalsID);
+    glDeleteVertexArrays(1, &_VAO);
+}
+
+void Chunk::Init()
+{
+    _program = new ShadingProgram(_vertexPath, _fragPath);
+    _viewID = glGetUniformLocation(_program->ID(), "view");
+    _posID = glGetUniformLocation(_program->ID(), "pos");
+}
+
+void Chunk::Load()
+{
+    _loadArrayBuffers();
+    _loadTexture();
+    _makeVAO();
+}
+
+void Chunk::Render(const glm::mat4& view, const std::vector<Chunk>& chunks)
+{
+    _program->Use();
+    glBindTexture(GL_TEXTURE_2D, _texID);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(_texLocID, 0);
+
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CW);
+    glCullFace(GL_BACK);
+    for (auto& chunk : chunks)
+    {
+        glBindVertexArray(chunk._VAO);
+        glUniform2f(_posID, float(chunk._pos.x), float(chunk._pos.y));
+        glUniformMatrix4fv(_viewID, 1, GL_FALSE, glm::value_ptr(view));
+        glDrawArrays(GL_TRIANGLES, 0, chunk._triangles.size() * 3);
+    }
 }

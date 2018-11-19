@@ -1,6 +1,6 @@
 #pragma once
 
-#include "voxel.hpp"
+#include "util_inc.hpp"
 
 //! Time utility class
 class Time

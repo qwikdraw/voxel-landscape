@@ -2,34 +2,49 @@
 #include "Chunk.hpp"
 #include "Window.hpp"
 #include "FreeCamera.hpp"
-#include "Landscape.hpp"
 #include "FPSDisplay.hpp"
+#include "Time.hpp"
 
-static bool	sphere(glm::vec3 p)
+std::vector<Chunk> gen_chunks()
 {
-	if (glm::length(glm::mod(p, 100.0f) - glm::vec3(50.0f)) < 40.0f)
-		return true;
-	return false;
+	Chunk::Init();
+	std::vector<Chunk> out;
+	for (int x = 0; x < 4; x++)
+	{
+		for (int y = 0; y < 4; y++)
+		{
+			Chunk c(glm::ivec2(x * 64, y * 64));
+			c.Load();
+			out.push_back(c);
+		}
+	}
+	return out;
 }
 
 int	main(void)
 {
-	Window window(1000, 1000, "");
-	
-	Landscape l(sphere);
-	FPSDisplay fps;
+	GLenum err;
 
+	Window window(1000, 1000, "");
 	glClearColor(0.2, 0.25, 0.3, 1);
 
+
+	FPSDisplay fps;
 	FreeCamera cam(window);
 	Time clock;
-	
+
+	std::vector<Chunk> chunks = gen_chunks();
+
 	while (!window.ShouldClose())
 	{
+		if ((err = glGetError()) != GL_NO_ERROR)
+			std::cerr << err << std::endl;
 		clock.Step();
 		window.Clear();
 		cam.Update(clock.Delta());
-		l.Render(cam.Projection());
+		auto proj = cam.Projection();
+		glm::mat4 view = proj.perspective * proj.lookAt;
+		Chunk::Render(view, chunks);
 		fps.Render();
 		glFinish();
 		window.Render();
