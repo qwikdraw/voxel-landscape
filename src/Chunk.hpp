@@ -6,8 +6,8 @@
 // defines a 1 x (top - bot) x 1 cuboid with undefined x, z locations
 struct Column
 {
-    int top;
     int bot;
+    int top;
 };
 
 // each pair specifies a start and end height for the land.
