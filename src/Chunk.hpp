@@ -63,8 +63,14 @@ class Chunk
     // dot(height, width) == 0.
     void _addRectangle(glm::vec3 center, glm::vec3 height, glm::vec3 width);
 
-    // creates a naive mesh for the column
-    void _columnToMesh(Column, float x, float z);
+    // create the mesh of the main land section, but uses
+    // right, left, front, back for the sides instead of main
+    void _addSection(float x, float z,
+        land_section_t right,
+        land_section_t left,
+        land_section_t front,
+        land_section_t back,
+        land_section_t main);
 
     // fill the _triangles, _uvs and _normals
     void _createMesh(const land_map_t&);

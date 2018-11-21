@@ -9,9 +9,9 @@ std::vector<Chunk> gen_chunks()
 {
 	Chunk::Init();
 	std::vector<Chunk> out;
-	for (int x = 0; x < 4; x++)
+	for (int x = 0; x < 5; x++)
 	{
-		for (int y = 0; y < 4; y++)
+		for (int y = 0; y < 5; y++)
 		{
 			Chunk c(glm::ivec2(x * 64, y * 64));
 			c.Load();

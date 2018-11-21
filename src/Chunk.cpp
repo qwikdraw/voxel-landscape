@@ -170,32 +170,52 @@ void Chunk::_addRectangle(glm::vec3 center, glm::vec3 height, glm::vec3 width)
     _uvs.push_back(uv1);
 }
 
-void Chunk::_columnToMesh(Column col, float x, float z)
+void Chunk::_addSection(float x, float z,
+    land_section_t right,
+    land_section_t left,
+    land_section_t front,
+    land_section_t back,
+    land_section_t main)
 {
-    // top face
-    _addRectangle(glm::vec3(x, col.top, z),
-                glm::vec3(0, 0, -1),
-                glm::vec3(1, 0, 0));
-    // bot face
-    _addRectangle(glm::vec3(x, col.bot, z),
-                glm::vec3(0, 0, 1),
-                glm::vec3(1, 0, 0));
-    // front face
-    _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z + 0.5),
-                glm::vec3(-1, 0, 0),
-                glm::vec3(0, col.top - col.bot, 0));
-    // back face
-    _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z - 0.5),
-                glm::vec3(1, 0, 0),
-                glm::vec3(0, col.top - col.bot, 0));
-    // right face
-    _addRectangle(glm::vec3(x + 0.5, (col.bot + col.top) / 2.0, z),
-                glm::vec3(0, 0, 1),
-                glm::vec3(0, col.top - col.bot, 0));
-    // left face
-    _addRectangle(glm::vec3(x - 0.5, (col.bot + col.top) / 2.0, z),
-                glm::vec3(0, 0, -1),
-                glm::vec3(0, col.top - col.bot, 0));
+    for (auto col : main)
+    {
+        // top face
+        _addRectangle(glm::vec3(x, col.top, z),
+                    glm::vec3(0, 0, -1),
+                    glm::vec3(1, 0, 0));
+        // bot face
+        _addRectangle(glm::vec3(x, col.bot, z),
+                    glm::vec3(0, 0, 1),
+                    glm::vec3(1, 0, 0));
+    }
+    for (auto col : front)
+    {
+        // front face
+        _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z + 0.5),
+                    glm::vec3(-1, 0, 0),
+                    glm::vec3(0, col.top - col.bot, 0));
+    }
+    for (auto col : back)
+    {
+        // back face
+        _addRectangle(glm::vec3(x, (col.bot + col.top) / 2.0, z - 0.5),
+                    glm::vec3(1, 0, 0),
+                    glm::vec3(0, col.top - col.bot, 0));
+    }
+    for (auto col : right)
+    {
+        // right face
+        _addRectangle(glm::vec3(x + 0.5, (col.bot + col.top) / 2.0, z),
+                    glm::vec3(0, 0, 1),
+                    glm::vec3(0, col.top - col.bot, 0));
+    }
+    for (auto col : left)
+    {
+        // left face
+        _addRectangle(glm::vec3(x - 0.5, (col.bot + col.top) / 2.0, z),
+                    glm::vec3(0, 0, -1),
+                    glm::vec3(0, col.top - col.bot, 0));
+    }
 }
 
 #include <list>
@@ -209,15 +229,15 @@ range_xor(land_section_t a, land_section_t b)
     for (size_t i = 0; i < a.size(); i++)
     {
         x[i * 2] = std::make_pair(a[i].bot, 1);
-        x[i * 2 + 1] = std::make_pair(a[i].top, 2);
+        x[i * 2 + 1] = std::make_pair(a[i].top, 4);
     }
     std::vector<std::pair<int, int>> y(b.size() * 2);
     for (size_t i = 0; i < b.size(); i++)
     {
-        y[i * 2] = std::make_pair(b[i].bot, 4);
+        y[i * 2] = std::make_pair(b[i].bot, 2);
         y[i * 2 + 1] = std::make_pair(b[i].top, 8);
     }
-    std::list<std::pair<int, int>> z(x.size() + y.size());
+    std::list<std::pair<int, int>> z;
     std::merge(x.begin(), x.end(), y.begin(), y.end(), std::back_inserter(z));
     // NOTE: z has at least size of 4 since a and b have at least 1 element
 
@@ -301,8 +321,17 @@ range_xor(land_section_t a, land_section_t b)
                 out_a.back().top = p.first;
                 state ^= 0b1111;
                 break;
+            // entering a, entering b
+            case(0b0011):
+                state ^= 0b1111;
+                break;
+            // exiting a, exiting b
+            case(0b1100):
+                state ^= 0b1111;
+                break;
             // invalid value
             default:
+                std::cout << state << " " << p.second << std::endl;
                 throw std::runtime_error("invalid state");
         }
     }
@@ -311,13 +340,35 @@ range_xor(land_section_t a, land_section_t b)
 
 void Chunk::_createMesh(const land_map_t& map)
 {
-    // indices 0 and 65 are part of the border, so for this simple
-    // algo we jsut ignore them. They should be used later
+    land_map_t left;
+    land_map_t right;
+    land_map_t front;
+    land_map_t back;
+
+    for (size_t x = 1; x < 66; x++)
+    {
+        for (size_t z = 1; z < 66; z++)
+        {
+                auto p1 = range_xor(map[x - 1][z], map[x][z]);
+                auto p2 = range_xor(map[x][z - 1], map[x][z]);
+
+                right[x - 1][z] = p1.first;
+                left[x][z] = p1.second;
+                front[x][z - 1] = p2.first;
+                back[x][z] = p2.second;
+        }
+    }
+
+    // 1 to 65 because we ignore border
     for (size_t x = 1; x < 65; x++)
+    {
         for (size_t z = 1; z < 65; z++)
-            for (auto col : map[x][z])
-                // subtract 32.5 becasue cube centers range from -31.5 to 31.5
-                _columnToMesh(col, float(x) - 32.5, float(z) - 32.5);
+        {
+            // subtract 32.5 becasue cube centers range from -31.5 to 31.5
+            _addSection(float(x) - 32.5, float(z) - 32.5,
+                right[x][z], left[x][z], front[x][z], back[x][z], map[x][z]);
+        }
+    }
 }
 
 Chunk::Chunk(glm::ivec2 pos)
