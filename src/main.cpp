@@ -4,22 +4,7 @@
 #include "FreeCamera.hpp"
 #include "FPSDisplay.hpp"
 #include "Time.hpp"
-
-std::vector<Chunk> gen_chunks()
-{
-	Chunk::Init();
-	std::vector<Chunk> out;
-	for (int x = 0; x < 5; x++)
-	{
-		for (int y = 0; y < 5; y++)
-		{
-			Chunk c(glm::ivec2(x * 64, y * 64));
-			c.Load();
-			out.push_back(c);
-		}
-	}
-	return out;
-}
+#include "Landscape.hpp"
 
 int	main(void)
 {
@@ -33,7 +18,8 @@ int	main(void)
 	FreeCamera cam(window);
 	Time clock;
 
-	std::vector<Chunk> chunks = gen_chunks();
+	Chunk::Init();
+	Landscape landscape;
 
 	while (!window.ShouldClose())
 	{
@@ -42,9 +28,7 @@ int	main(void)
 		clock.Step();
 		window.Clear();
 		cam.Update(clock.Delta());
-		auto proj = cam.Projection();
-		glm::mat4 view = proj.perspective * proj.lookAt;
-		Chunk::Render(view, chunks);
+		landscape.Render(cam.Projection());
 		fps.Render();
 		glFinish();
 		window.Render();

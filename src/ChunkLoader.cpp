@@ -1,11 +1,11 @@
 #include "ChunkLoader.hpp"
 
-ChunkLoader::ChunkLoader(std::function<bool(glm::vec3)> formula) : _formula(formula)
+ChunkLoader::ChunkLoader()
 {
-	for (int i = 0; i < 4; i++)
+	for (size_t i = 0; i < 4; i++)
 	{
 		_futures[i] = _promises[i].get_future();
-		_threads[i] = new std::thread(&ChunkLoader::chunkCreator, this, i);
+		_threads[i] = new std::thread(&ChunkLoader::_chunkCreator, this, i);
 		_threadClean[i] = false;
 	}
 }
@@ -13,18 +13,18 @@ ChunkLoader::ChunkLoader(std::function<bool(glm::vec3)> formula) : _formula(form
 ChunkLoader::~ChunkLoader(void)
 {
 	Clear();
-	for (int i = 0; i < 4; i++)
+	for (size_t i = 0; i < 4; i++)
 		_promises[i].set_value();
-	for (int i = 0; i < 4; i++)
+	for (size_t i = 0; i < 4; i++)
 		_threads[i]->join();
 }
 
-static std::tuple<float, float, float>	map_key(const glm::vec3& pos)
+static std::tuple<int, int> map_key(const glm::ivec2& pos)
 {
-	return std::make_tuple(pos.x, pos.y, pos.z);
+	return std::make_tuple(pos.x, pos.y);
 }
 
-void	ChunkLoader::chunkCreator(int threadNum)
+void	ChunkLoader::_chunkCreator(size_t threadNum)
 {
 	while (_futures[threadNum].wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
 	{
@@ -36,12 +36,11 @@ void	ChunkLoader::chunkCreator(int threadNum)
 			_mutex[0].unlock();
 			continue;
 		}
-		glm::vec3 pos = _waitingChunks.front();
+		glm::ivec2 pos = _waitingChunks.front();
 		_waitingChunks.pop();
 		_mutex[0].unlock();
 
-		OcTree *tree = OcTree::Generate64(_formula, pos);
-		Chunk *c = new Chunk(pos, tree, 6);
+		Chunk *c = new Chunk(pos);
 
 		_mutex[1].lock();
 		if (_threadClean[threadNum])
@@ -52,14 +51,14 @@ void	ChunkLoader::chunkCreator(int threadNum)
 	}
 }
 
-void	ChunkLoader::Add(const glm::vec3& pos)
+void	ChunkLoader::Add(const glm::ivec2& pos)
 {
 	_mutex[0].lock();
 	_waitingChunks.push(pos);
 	_mutex[0].unlock();
 }
 
-Chunk	*ChunkLoader::Get(const glm::vec3& pos)
+Chunk	*ChunkLoader::Get(const glm::ivec2& pos)
 {
 	_mutex[1].lock();
 	if (_loadedChunks.count(map_key(pos)) == 0)
@@ -79,7 +78,7 @@ void	ChunkLoader::Clear(void)
 	for (auto const& p : _loadedChunks)
 		_chunksToFree.push_back(p.second);
 	_loadedChunks.clear();
-	_waitingChunks = std::queue<glm::vec3>();
+	_waitingChunks = std::queue<glm::ivec2>();
 	for (int i = 0; i < 4; i++)
 		_threadClean[i] = true;
 	_mutex[1].unlock();
@@ -89,7 +88,9 @@ void	ChunkLoader::DeleteDeadChunks(void)
 {
 	if (_chunksToFree.empty())
 		return;
-	delete _chunksToFree.front();
+	Chunk* c = _chunksToFree.front();
+	c->Unload();
+	delete c;
 
 	_mutex[1].lock();
 	_chunksToFree.pop_front();

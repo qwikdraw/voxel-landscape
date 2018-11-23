@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ShadingProgram.hpp"
+#include "FreeCamera.hpp"
 #include "util_inc.hpp"
 
 // defines a 1 x (top - bot) x 1 cuboid with undefined x, z locations
@@ -18,20 +19,27 @@ struct Column
 // vector[i].bot >= 0
 typedef std::vector<Column> land_section_t;
 
-// The size is 66 because a chunk is 64x64 and we need 1 block of
+// The size is 34 because a chunk is 32x32 and we need 1 block of
 // context around the edges (a border) to generate the chunk
-typedef std::array<std::array<land_section_t, 66>, 66> land_map_t;
+typedef std::array<std::array<land_section_t, 34>, 34> land_map_t;
 
+// generates generates a reproducable landmap based on pos
 land_map_t terrain_gen(glm::ivec2 pos);
 
-// a chunk has dimensions of 64x64x256
+// removes overlapping sections of a and b, returning the new result
+// as a pair
+std::pair<land_section_t, land_section_t>
+range_xor(land_section_t a, land_section_t b);
+
+// a chunk has dimensions of 32x32x256
 class Chunk
 {
     static constexpr const char* _vertexPath = "src/voxel_vert.glsl";
     static constexpr const char* _fragPath = "src/voxel_frag.glsl";
 
     static ShadingProgram *_program;
-    static GLuint _viewID;
+    static GLuint _perspectiveID;
+    static GLuint _lookAtID;
     static GLuint _posID;
     static GLuint _texID;
     static GLuint _texLocID;
@@ -77,7 +85,7 @@ class Chunk
 
 public:
 
-    // creates a chunk that spans: pos - vec2(32) to pos + vec2(32)
+    // creates a chunk that spans: pos - vec2(16) to pos + vec2(16)
     // and has height from 0 - 256
     // contains no OpenGL calls and so can be called on any thread
     Chunk(glm::ivec2 pos);
@@ -94,6 +102,9 @@ public:
     // must be called on main thread.
     void Unload();
 
+    // returns the position of the chunk
+    glm::ivec2 Pos();
+
     // render vector of chunks with view matrix (projection * lookat)
-    static void Render(const glm::mat4& view, const std::vector<Chunk>&);
+    static void Render(const Projection&, const std::vector<Chunk*>&);
 };

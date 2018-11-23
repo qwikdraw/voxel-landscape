@@ -11,7 +11,7 @@ GLFW_LINK = -L ~/.brew/lib -lglfw
 
 MY_INC = -I src/.
 
-FLAGS = -std=c++17 -O3 #-fsanitize=undefined #-fsanitize=address
+FLAGS = -std=c++17 -O3 -fsanitize=undefined -fsanitize=address
 
 make:
 	g++ -g $(FLAGS) $(SRC) -o $(NAME) $(FRAMEWORKS) $(MY_INC) $(GLFW_INC) $(GLFW_LINK)

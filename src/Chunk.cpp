@@ -1,7 +1,8 @@
 #include "Chunk.hpp"
 
 ShadingProgram* Chunk::_program;
-GLuint Chunk::_viewID;
+GLuint Chunk::_perspectiveID;
+GLuint Chunk::_lookAtID;
 GLuint Chunk::_posID;
 GLuint Chunk::_texID;
 GLuint Chunk::_texLocID;
@@ -32,22 +33,22 @@ static land_section_t section_gen(float a, float b)
 
 land_map_t terrain_gen(glm::ivec2 pos)
 {
-    // 66 because 64x64 grid + border on index 0 and 65
-    float noise_1[66][66];
-    float noise_2[66][66];
+    // 34 because 32x32 grid + border on index 0 and 33
+    float noise_1[34][34];
+    float noise_2[34][34];
 
-    for (size_t x = 0; x < 66; x++)
+    for (size_t x = 0; x < 34; x++)
     {
-        for (size_t z = 0; z < 66; z++)
+        for (size_t z = 0; z < 34; z++)
         {
             noise_1[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos) / 133.37);
             noise_2[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos +
-                                        glm::ivec2(444, 124) /* random offset */) / 133.37);
+                                        glm::ivec2(444, 124) /* random offset */) / 10.37);
         }
     }
     land_map_t landmap;
-    for (size_t x = 0; x < 66; x++)
-        for (size_t z = 0; z < 66; z++)
+    for (size_t x = 0; x < 34; x++)
+        for (size_t z = 0; z < 34; z++)
             landmap[x][z] = section_gen((noise_1[x][z] + 1.0) / 2.0, (noise_2[x][z] + 1.0) / 2.0);
     return landmap;
 }
@@ -83,8 +84,8 @@ void Chunk::_loadTexture()
     // but for now it should display a checkerboard
     size_t width = 2;
     size_t height = 2;
-    unsigned char data[] = {255, 255, 255, 255, 100, 100, 100, 255,
-                            100, 100, 100, 255, 255, 255, 255, 255};
+    unsigned char data[] = {90, 130, 200, 255, 90, 130, 200, 255,
+                            90, 130, 200, 255, 90, 130, 200, 255,};
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glGenTextures(1, &_texID);
@@ -218,126 +219,6 @@ void Chunk::_addSection(float x, float z,
     }
 }
 
-#include <list>
-
-static std::pair<land_section_t, land_section_t>
-range_xor(land_section_t a, land_section_t b)
-{
-    // key for second value in the pair
-    // 1: enter a, 2: enter b, 4: exit a, 8: exit b
-    std::vector<std::pair<int, int>> x(a.size() * 2);
-    for (size_t i = 0; i < a.size(); i++)
-    {
-        x[i * 2] = std::make_pair(a[i].bot, 1);
-        x[i * 2 + 1] = std::make_pair(a[i].top, 4);
-    }
-    std::vector<std::pair<int, int>> y(b.size() * 2);
-    for (size_t i = 0; i < b.size(); i++)
-    {
-        y[i * 2] = std::make_pair(b[i].bot, 2);
-        y[i * 2 + 1] = std::make_pair(b[i].top, 8);
-    }
-    std::list<std::pair<int, int>> z;
-    std::merge(x.begin(), x.end(), y.begin(), y.end(), std::back_inserter(z));
-    // NOTE: z has at least size of 4 since a and b have at least 1 element
-
-    // if 2 elements next to each other have the same .first value
-    // XOR the second element's .second value to the first and remove
-    // the second element.
-    auto it_1 = z.begin();
-    auto it_2 = std::next(it_1, 1);
-    while (it_2 != z.end())
-    {
-        if (it_1->first == it_2->first)
-        {
-            it_1->second ^= it_2->second;
-            auto temp = it_2;
-            it_2++;
-            z.erase(temp);
-            if (it_2 == z.end())
-                break;
-        }
-        it_1++;
-        it_2++;
-    }
-
-    land_section_t out_a;
-    land_section_t out_b;
-
-    // state determines if is inside or outside a or b from the XOR of
-    // the following codes:
-    // a outside: 1, b outside: 2, a inside: 4, b inside: 8.
-    int state = 0b0011;
-    for (auto p : z)
-    {
-        // p.second tells us if we are entering / exiting a or b or both
-        switch(p.second)
-        {
-            // entering a
-            case(0b0001):
-                // if inside b
-                if (state & 0b1000)
-                    out_b.back().top = p.first;
-                else
-                    out_a.push_back(Column{p.first, -1});
-                state ^= 0b0101;
-                break;
-            // entering b
-            case(0b0010):
-                // if inside a
-                if (state & 0b0100)
-                    out_a.back().top = p.first;
-                else
-                    out_b.push_back(Column{p.first, -1});
-                state ^= 0b1010;
-                break;
-            // exiting a
-            case(0b0100):
-                // if inside b
-                if (state & 0b1000)
-                    out_b.push_back(Column{p.first, -1});
-                else
-                    out_a.back().top = p.first;
-                state ^= 0b0101;
-                break;
-            // exiting b
-            case(0b1000):
-                // if inside a
-                if (state & 0b0100)
-                    out_a.push_back(Column{p.first, -1});
-                else
-                    out_b.back().top = p.first;
-                state ^= 0b1010;
-                break;
-            // entering a, exiting b
-            case(0b1001):
-                out_a.push_back(Column{p.first, -1});
-                out_b.back().top = p.first;
-                state ^= 0b1111;
-                break;
-            // entering b, exiting a
-            case(0b0110):
-                out_b.push_back(Column{p.first, -1});
-                out_a.back().top = p.first;
-                state ^= 0b1111;
-                break;
-            // entering a, entering b
-            case(0b0011):
-                state ^= 0b1111;
-                break;
-            // exiting a, exiting b
-            case(0b1100):
-                state ^= 0b1111;
-                break;
-            // invalid value
-            default:
-                std::cout << state << " " << p.second << std::endl;
-                throw std::runtime_error("invalid state");
-        }
-    }
-    return std::make_pair(out_a, out_b);
-}
-
 void Chunk::_createMesh(const land_map_t& map)
 {
     land_map_t left;
@@ -345,9 +226,9 @@ void Chunk::_createMesh(const land_map_t& map)
     land_map_t front;
     land_map_t back;
 
-    for (size_t x = 1; x < 66; x++)
+    for (size_t x = 1; x < 34; x++)
     {
-        for (size_t z = 1; z < 66; z++)
+        for (size_t z = 1; z < 34; z++)
         {
                 auto p1 = range_xor(map[x - 1][z], map[x][z]);
                 auto p2 = range_xor(map[x][z - 1], map[x][z]);
@@ -359,13 +240,13 @@ void Chunk::_createMesh(const land_map_t& map)
         }
     }
 
-    // 1 to 65 because we ignore border
-    for (size_t x = 1; x < 65; x++)
+    // 1 to 33 because we ignore border
+    for (size_t x = 1; x < 33; x++)
     {
-        for (size_t z = 1; z < 65; z++)
+        for (size_t z = 1; z < 33; z++)
         {
-            // subtract 32.5 becasue cube centers range from -31.5 to 31.5
-            _addSection(float(x) - 32.5, float(z) - 32.5,
+            // subtract 12.5 becasue cube centers range from -15.5 to 15.5
+            _addSection(float(x) - 16.5, float(z) - 16.5,
                 right[x][z], left[x][z], front[x][z], back[x][z], map[x][z]);
         }
     }
@@ -389,8 +270,10 @@ void Chunk::Unload()
 void Chunk::Init()
 {
     _program = new ShadingProgram(_vertexPath, _fragPath);
-    _viewID = glGetUniformLocation(_program->ID(), "view");
+    _perspectiveID = glGetUniformLocation(_program->ID(), "perspective");
+    _lookAtID = glGetUniformLocation(_program->ID(), "lookAt");
     _posID = glGetUniformLocation(_program->ID(), "pos");
+    _texLocID = glGetUniformLocation(_program->ID(), "tex");
 }
 
 void Chunk::Load()
@@ -400,8 +283,15 @@ void Chunk::Load()
     _makeVAO();
 }
 
-void Chunk::Render(const glm::mat4& view, const std::vector<Chunk>& chunks)
+glm::ivec2 Chunk::Pos()
 {
+    return _pos;
+}
+
+void Chunk::Render(const Projection& projection, const std::vector<Chunk*>& chunks)
+{
+    GLenum err;
+
     _program->Use();
     glBindTexture(GL_TEXTURE_2D, _texID);
     glActiveTexture(GL_TEXTURE0);
@@ -410,11 +300,14 @@ void Chunk::Render(const glm::mat4& view, const std::vector<Chunk>& chunks)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
-    for (auto& chunk : chunks)
+    for (auto chunk : chunks)
     {
-        glBindVertexArray(chunk._VAO);
-        glUniform2f(_posID, float(chunk._pos.x), float(chunk._pos.y));
-        glUniformMatrix4fv(_viewID, 1, GL_FALSE, glm::value_ptr(view));
-        glDrawArrays(GL_TRIANGLES, 0, chunk._triangles.size() * 3);
+        glBindVertexArray(chunk->_VAO);
+        glUniform2f(_posID, float(chunk->_pos.x), float(chunk->_pos.y));
+        glUniformMatrix4fv(_perspectiveID, 1, GL_FALSE,
+            glm::value_ptr(projection.perspective));
+        glUniformMatrix4fv(_lookAtID, 1, GL_FALSE,
+            glm::value_ptr(projection.lookAt));
+        glDrawArrays(GL_TRIANGLES, 0, chunk->_triangles.size() * 3);
     }
 }
