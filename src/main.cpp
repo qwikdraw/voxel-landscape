@@ -37,7 +37,7 @@ int	main(void)
 		cam.Update(clock.Delta());
 		sky.Render(cam.Projection());
 		landscape.Render(cam.Projection());
-		fps.Render();
+		fps.Render(window);
 		glFinish();
 		window.Render();
 	}
