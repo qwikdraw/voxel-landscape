@@ -10,7 +10,7 @@ FreeCamera::FreeCamera(Window& window) : _window(window)
 	_rotation = glm::mat4(1);
 	_aspect = 1;
 	_near = 0.1;
-	_far = 160;
+	_far = 500;
 	_fov = 80;
 
     glm::mat4 translate = glm::translate(_projection.position);

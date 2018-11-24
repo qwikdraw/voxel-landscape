@@ -4,6 +4,7 @@ ShadingProgram* Chunk::_program;
 GLuint Chunk::_perspectiveID;
 GLuint Chunk::_lookAtID;
 GLuint Chunk::_posID;
+GLuint Chunk::_camposID;
 GLuint Chunk::_texID;
 GLuint Chunk::_texLocID;
 
@@ -43,7 +44,7 @@ land_map_t terrain_gen(glm::ivec2 pos)
         {
             noise_1[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos) / 133.37);
             noise_2[x][z] = glm::perlin(glm::vec2(glm::ivec2(x, z) + pos +
-                                        glm::ivec2(444, 124) /* random offset */) / 10.37);
+                                        glm::ivec2(444, 124) /* random offset */) / 35.37);
         }
     }
     land_map_t landmap;
@@ -273,6 +274,7 @@ void Chunk::Init()
     _perspectiveID = glGetUniformLocation(_program->ID(), "perspective");
     _lookAtID = glGetUniformLocation(_program->ID(), "lookAt");
     _posID = glGetUniformLocation(_program->ID(), "pos");
+    _camposID = glGetUniformLocation(_program->ID(), "campos");
     _texLocID = glGetUniformLocation(_program->ID(), "tex");
 }
 
@@ -304,6 +306,7 @@ void Chunk::Render(const Projection& projection, const std::vector<Chunk*>& chun
     {
         glBindVertexArray(chunk->_VAO);
         glUniform2f(_posID, float(chunk->_pos.x), float(chunk->_pos.y));
+        glUniform3fv(_camposID, 1, &projection.position[0]);
         glUniformMatrix4fv(_perspectiveID, 1, GL_FALSE,
             glm::value_ptr(projection.perspective));
         glUniformMatrix4fv(_lookAtID, 1, GL_FALSE,

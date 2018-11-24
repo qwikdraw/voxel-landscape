@@ -41,6 +41,7 @@ class Chunk
     static GLuint _perspectiveID;
     static GLuint _lookAtID;
     static GLuint _posID;
+    static GLuint _camposID;
     static GLuint _texID;
     static GLuint _texLocID;
 
