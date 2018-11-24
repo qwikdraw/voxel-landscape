@@ -8,7 +8,7 @@
 class	Landscape
 {
 	// size has to have odd number dimensions
-	constexpr static glm::ivec2 _size = {15, 15};
+	constexpr const static glm::ivec2 _size = {15, 15};
 
 	// chunks that make up the landscape
 	Chunk* _chunks[_size.x][_size.y] = {nullptr};

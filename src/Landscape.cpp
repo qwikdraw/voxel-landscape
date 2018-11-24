@@ -1,5 +1,7 @@
 #include "Landscape.hpp"
 
+constexpr const glm::ivec2 Landscape::_size;
+
 Landscape::Landscape()
 {
 	_center = glm::ivec2(0);

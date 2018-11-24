@@ -313,4 +313,5 @@ void Chunk::Render(const Projection& projection, const std::vector<Chunk*>& chun
             glm::value_ptr(projection.lookAt));
         glDrawArrays(GL_TRIANGLES, 0, chunk->_triangles.size() * 3);
     }
+    glDisable(GL_CULL_FACE);
 }
