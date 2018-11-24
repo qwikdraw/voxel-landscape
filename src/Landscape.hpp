@@ -8,15 +8,17 @@
 class	Landscape
 {
 	// size has to have odd number dimensions
-	constexpr const static glm::ivec2 _size = {15, 15};
+	static constexpr int _sizeX = 15;
+	static constexpr int _sizeY = 15;
+	static const glm::ivec2 _size;
 
 	// chunks that make up the landscape
-	Chunk* _chunks[_size.x][_size.y] = {nullptr};
+	Chunk* _chunks[_sizeX][_sizeY] = {nullptr};
 
 	// loads chunks on seperate threads
 	ChunkLoader _chunkLoader;
 
-	// the position of chunk _chunks[_size.x / 2][_size.y / 2]
+	// the position of chunk _chunks[_sizeX / 2][_sizeY / 2]
 	glm::ivec2 _center;
 
 	// uses camera position and direction to choose only the chunks needed to

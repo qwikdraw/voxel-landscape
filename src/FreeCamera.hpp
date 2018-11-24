@@ -13,9 +13,9 @@ struct	Projection
 
 class	FreeCamera
 {
-	static glm::vec3 constexpr _basePos = {0, 0, 0};
-	static glm::vec3 constexpr _up = {0, 0, 1};
-	static glm::vec3 constexpr _forward = {1, 0, 0};
+	static glm::vec3 const _basePos;
+	static glm::vec3 const _up;
+	static glm::vec3 const _forward;
 
 	Window& _window;
 

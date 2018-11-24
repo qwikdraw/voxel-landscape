@@ -1,8 +1,8 @@
 #include "FreeCamera.hpp"
 
-glm::vec3 constexpr FreeCamera::_basePos;
-glm::vec3 constexpr FreeCamera::_up;
-glm::vec3 constexpr FreeCamera::_forward;
+glm::vec3 const FreeCamera::_basePos = {0, 0, 0};
+glm::vec3 const FreeCamera::_up = {0, 0, 1};
+glm::vec3 const FreeCamera::_forward = {1, 0, 0};
 
 FreeCamera::FreeCamera(Window& window) : _window(window)
 {

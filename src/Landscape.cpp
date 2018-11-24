@@ -1,12 +1,12 @@
 #include "Landscape.hpp"
 
-constexpr const glm::ivec2 Landscape::_size;
+const glm::ivec2 Landscape::_size = {_sizeX, _sizeY};
 
 Landscape::Landscape()
 {
 	_center = glm::ivec2(0);
-	for (int x = -_size.x / 2; x <= _size.x / 2; x++)
-		for (int y = -_size.y / 2; y <= _size.y / 2; y++)
+	for (int x = -_sizeX / 2; x <= _sizeX / 2; x++)
+		for (int y = -_sizeY / 2; y <= _sizeY / 2; y++)
 			_chunkLoader.Add(glm::ivec2(x * 32, y * 32));
 }
 
@@ -17,9 +17,9 @@ std::vector<Chunk*>	Landscape::_chunksToRender(const glm::vec2& pos, const glm::
 
 	// add every chunk that is within maxChunkDist
 	// distance from camera
-	for (size_t x = 0; x < _size.x; x++)
+	for (size_t x = 0; x < _sizeX; x++)
 	{
-		for (size_t y = 0; y < _size.y; y++)
+		for (size_t y = 0; y < _sizeY; y++)
 		{
 			if (_chunks[x][y])
 			{
@@ -52,13 +52,13 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 	glm::ivec2 diff = newCenter - _center;
 
 	_chunkLoader.Clear();
-	Chunk* tempChunks[_size.x][_size.y] = {nullptr};
-	for (int x = 0; x < _size.x; x++)
+	Chunk* tempChunks[_sizeX][_sizeY] = {nullptr};
+	for (int x = 0; x < _sizeX; x++)
 	{
-		for (int y = 0; y < _size.y; y++)
+		for (int y = 0; y < _sizeY; y++)
 		{
-			if (x - diff.x >= 0 && x - diff.x < _size.x &&
-				y - diff.y >= 0 && y - diff.y < _size.y)
+			if (x - diff.x >= 0 && x - diff.x < _sizeX &&
+				y - diff.y >= 0 && y - diff.y < _sizeY)
 			{
 				tempChunks[size_t(x - diff.x)][size_t(y - diff.y)] =
 					_chunks[size_t(x)][size_t(y)];
@@ -73,10 +73,10 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 	std::memmove(&_chunks, &tempChunks, sizeof(_chunks));
 	_center = newCenter;
 
-	for (int x = 0; x < _size.x; x++)
-		for (int y = 0; y < _size.y; y++)
+	for (int x = 0; x < _sizeX; x++)
+		for (int y = 0; y < _sizeY; y++)
 			if (!_chunks[x][y])
-				_chunkLoader.Add(glm::ivec2(x - _size.x / 2, y - _size.y / 2) * 32 + _center * 32);
+				_chunkLoader.Add(glm::ivec2(x - _sizeX / 2, y - _sizeY / 2) * 32 + _center * 32);
 }
 
 void	Landscape::Render(const Projection& projection)
@@ -91,9 +91,9 @@ void	Landscape::Render(const Projection& projection)
 
 	Chunk::Render(projection, renderList);
 
-	for (size_t x = 0; x < _size.x; x++)
+	for (size_t x = 0; x < _sizeX; x++)
 	{
-		for (size_t y = 0; y < _size.y; y++)
+		for (size_t y = 0; y < _sizeY; y++)
 		{
 			if (!_chunks[x][y])
 			{
