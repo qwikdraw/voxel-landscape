@@ -18,17 +18,17 @@ OBJ_DIR = obj
 SRC = $(addsuffix .cpp, $(addprefix src/, $(LIST)))
 OBJ = $(addsuffix .o, $(addprefix $(OBJ_DIR)/, $(LIST)))
 
-CPPFLAGS = -std=c++14 \
+CPPFLAGS = -std=c++17 \
 $(shell pkg-config --cflags glfw3 glm) \
 -I lib/entt/src \
 -I lib/lodepng \
 -g -O3 -march=native \
--fsanitize=address
+-fsanitize=address -fsanitize=undefined
 
 LDFLAGS = -framework OpenGl \
 $(shell pkg-config --libs glfw3 glm) \
 -L lib/lodepng -llodepng \
--fsanitize=address
+-fsanitize=address -fsanitize=undefined
 
 all: $(OBJ_DIR) $(NAME)
 
@@ -67,4 +67,4 @@ re:	fclean all
 deps:
 	@./deps.sh
 
-.PHONY: clean fclean all re docs
+.PHONY: clean fclean all re
