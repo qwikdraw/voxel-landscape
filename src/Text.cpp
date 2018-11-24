@@ -1,13 +1,14 @@
 #include "Text.hpp"
 
-ShadingProgram		*Text::_program = nullptr;
-std::vector<float>	Text::_square;
-std::vector<float>	Text::_uv;
-GLuint			Text::_squareID;
-GLuint			Text::_UVID;
-GLuint			Text::_textureID;
-GLuint			Text::_textureLocationID;
-bool			Text::_init = false;
+ShadingProgram* Text::_program = nullptr;
+std::vector<float> Text::_square;
+std::vector<float> Text::_uv;
+GLuint Text::_squareID;
+GLuint Text::_UVID;
+GLuint Text::_textureID;
+GLuint Text::_textureLocationID;
+GLuint Text::_VAO;
+bool Text::_init = false;
 
 Text::Text(std::string message)
 {
@@ -16,22 +17,21 @@ Text::Text(std::string message)
 	if (_init)
 		return;
 
-	_program = new ShadingProgram(TEXT_VERTEX_SHADER_PATH, "",
-				      TEXT_FRAGMENT_SHADER_PATH);
-	
+	_program = new ShadingProgram(_vertexPath, _fragPath);
+
 	_square.resize(12);
 	_uv.resize(12);
 
 	_textureLocationID = glGetUniformLocation(_program->ID(), "tex");
 	glUseProgram(_program->ID());
-	
-	glGenBuffers(1, &_squareID);	
+
+	glGenBuffers(1, &_squareID);
 	glBindBuffer(GL_ARRAY_BUFFER, _squareID);
 	glBufferData(GL_ARRAY_BUFFER,
 		     2 * 6 * sizeof(GLfloat),
 		     NULL,
 		     GL_STREAM_DRAW);
-	
+
 	glGenBuffers(1, &_UVID);
 	glBindBuffer(GL_ARRAY_BUFFER, _UVID);
 	glBufferData(GL_ARRAY_BUFFER,
@@ -39,8 +39,8 @@ Text::Text(std::string message)
 		     NULL,
 		     GL_STREAM_DRAW);
 
-	Texture textureParser(FONT_FILE);
-	
+	Texture textureParser(_fontFile);
+
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glGenTextures(1, &_textureID);
 	glBindTexture(GL_TEXTURE_2D, _textureID);
@@ -62,6 +62,8 @@ Text::Text(std::string message)
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(_textureLocationID, 0);
 
+	glGenVertexArrays(1, &_VAO);
+
 	_init = true;
 }
 
@@ -70,7 +72,7 @@ void	Text::RenderChar(char c, glm::vec2 topleft, glm::vec2 botright)
 
 	glm::vec2 topleftUV((c % 16) / 16.0f, (16 - (c / 16)) / 16.0f);
 	glm::vec2 botrightUV(topleftUV.x + 1 / 16.0f, topleftUV.y - 1 / 16.0f);
-	
+
 	_square[0] = topleft.x; _square[1] = topleft.y;
 	_square[2] = topleft.x; _square[3] = botright.y;
 	_square[4] = botright.x; _square[5] = botright.y;
@@ -88,31 +90,33 @@ void	Text::RenderChar(char c, glm::vec2 topleft, glm::vec2 botright)
 	_uv[8] = botrightUV.x; _uv[9] = topleftUV.y;
 	_uv[10] = botrightUV.x; _uv[11] = botrightUV.y;
 
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, _squareID);
 	glBufferData(GL_ARRAY_BUFFER,
-		     12  * sizeof(GLfloat),
-		     NULL,
-		     GL_STREAM_DRAW);
+			     12  * sizeof(GLfloat),
+			     NULL,
+			     GL_STREAM_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER,
-			0,
-			12 * sizeof(GLfloat),
-			&_square[0]);
-	
+				0,
+				12 * sizeof(GLfloat),
+				&_square[0]);
+
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, _UVID);
 	glBufferData(GL_ARRAY_BUFFER,
-		     12 * sizeof(GLfloat),
-		     NULL,
-		     GL_STREAM_DRAW);
+			     12 * sizeof(GLfloat),
+			     NULL,
+			     GL_STREAM_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER,
-			0,
-			12 * sizeof(GLfloat),
-			&_uv[0]);
+				0,
+				12 * sizeof(GLfloat),
+				&_uv[0]);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	
+
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glDisableVertexAttribArray(0);
@@ -129,7 +133,7 @@ void	Text::Render(float aspect)
 	float charWidth = 1 / aspect;
 	float charHeight = 1;
 
-	float totalChars = _message.length();	
+	float totalChars = _message.length();
 
 
 	float totalWidth = charWidth * totalChars;
@@ -148,21 +152,23 @@ void	Text::Render(float aspect)
 	glDisable(GL_DEPTH_TEST);
 
 	glBindTexture(GL_TEXTURE_2D, _textureID);
-        glActiveTexture(GL_TEXTURE0);
-        glUniform1i(_textureLocationID, 0);
-	
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(_textureLocationID, 0);
+
+	glBindVertexArray(_VAO);
 	for (size_t i = 0; i < _message.length(); i++)
 	{
 		float distFromCenter = i - static_cast<float>(_message.length() - 1) / 2;
-		
+
 		float xCenter =	distFromCenter * charWidth * 0.8;
 
 		RenderChar(_message[i],
 			   glm::vec2(xCenter - charWidth / 2, charHeight / 2),
 			   glm::vec2(xCenter + charWidth / 2, -charHeight / 2));
 	}
+	glBindVertexArray(0);
 
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	
+
 }

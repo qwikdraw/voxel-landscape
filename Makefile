@@ -10,7 +10,8 @@ FreeCamera \
 Landscape \
 range_xor \
 SkyBox \
-Texture
+Texture \
+Text
 
 SRC_DIR = src
 OBJ_DIR = obj

@@ -2,6 +2,8 @@
 
 #include "util_inc.hpp"
 #include "Time.hpp"
+#include "Window.hpp"
+#include "Text.hpp"
 
 class	FPSDisplay
 {
@@ -9,9 +11,11 @@ class	FPSDisplay
 	double _times[60];
 	double _timer;
 	Time _clock;
+	Text* _text = nullptr;
 
 public:
 
-	FPSDisplay(void);
-	void	Render(void);
+	FPSDisplay();
+	~FPSDisplay();
+	void	Render(Window&);
 };
