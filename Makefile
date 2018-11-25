@@ -18,31 +18,35 @@ OBJ_DIR = obj
 
 SRC = $(addsuffix .cpp, $(addprefix src/, $(LIST)))
 OBJ = $(addsuffix .o, $(addprefix $(OBJ_DIR)/, $(LIST)))
+DEP = $(OBJ:%.o=%.d)
 
-CPPFLAGS = -std=c++17 \
+MAKEFLAGS=-j4
+
+CPPFLAGS = -std=c++17 -Wall -Wextra -Werror -Wno-unused-parameter \
 $(shell pkg-config --cflags glfw3 glm) \
--I lib/entt/src \
 -I lib/lodepng \
 -g -O3 -march=native \
--fsanitize=address -fsanitize=undefined
+#-fsanitize=address -fsanitize=undefined
 
 LDFLAGS = -framework OpenGl \
 $(shell pkg-config --libs glfw3 glm) \
--L lib/lodepng -llodepng \
--fsanitize=address -fsanitize=undefined
+-L lib/lodepng -llodepng -pipe -flto=thin \
+#-fsanitize=address -fsanitize=undefined
 
 all: $(OBJ_DIR) $(NAME)
 
 $(OBJ_DIR):
 	@mkdir -p $(OBJ_DIR)
 
+-include $(DEP)
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@echo "\033[34;1mCompiling: \033[0m"$<
-	@clang++ $(CPPFLAGS) -c -o $@ $<
+	@printf "\e[34;1mCompiling: \e[0m%s\n" $<
+	@clang++ $(CPPFLAGS) -MMD -c $< -o $@
 
 lib/lodepng/liblodepng.a: lib/lodepng/lodepng.cpp
-	@echo "\033[35;1mCompiling Dependency: \033[0m"$<
-	@clang++ $(CPPFLAGS) -c -o lib/lodepng/lodepng.o $<
+	@printf "\e[35;1mCompiling Dependency: \e[0m%s\n" $<
+	@clang++ $(CPPFLAGS) -pipe -flto=thin -c -o lib/lodepng/lodepng.o $<
 	@ar rcs $@ lib/lodepng/lodepng.o
 
 $(NAME): lib/lodepng/liblodepng.a $(OBJ)
@@ -51,19 +55,19 @@ $(NAME): lib/lodepng/liblodepng.a $(OBJ)
 	@echo "\033[32;1mCreated:\033[0m "$(NAME)
 
 clean:
-	@echo "\033[31;1mCleaning..\033[0m"
+	@printf "\e[31;1mCleaning..\e[0m\n"
 	@rm -f $(OBJ)
 	@rm -f lib/lodepng/lodepng.o
 
 fclean:
-	@echo "\033[31;1mFull Cleaning..\033[0m"
+	@printf "\e[31;1mFull Cleaning..\e[0m\n"
 	@rm -rf $(OBJ_DIR)
 	@rm -f $(NAME)
 	@rm -f lib/lodepng/liblodepng.a
 
-re:	fclean all
-
-
+re:
+	@$(MAKE) fclean 2>/dev/null
+	@$(MAKE) 2>/dev/null
 
 deps:
 	@./deps.sh

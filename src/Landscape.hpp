@@ -13,7 +13,7 @@ class	Landscape
 	static const glm::ivec2 _size;
 
 	// chunks that make up the landscape
-	Chunk* _chunks[_sizeX][_sizeY] = {nullptr};
+	Chunk* _chunks[_sizeX][_sizeY] = {{nullptr}};
 
 	// loads chunks on seperate threads
 	ChunkLoader _chunkLoader;

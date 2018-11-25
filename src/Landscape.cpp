@@ -52,7 +52,7 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 	glm::ivec2 diff = newCenter - _center;
 
 	_chunkLoader.Clear();
-	Chunk* tempChunks[_sizeX][_sizeY] = {nullptr};
+	Chunk* tempChunks[_sizeX][_sizeY] = {{nullptr}};
 	for (int x = 0; x < _sizeX; x++)
 	{
 		for (int y = 0; y < _sizeY; y++)
