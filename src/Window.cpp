@@ -9,7 +9,6 @@ Window::Window(int width, int height, std::string name) :
 	_windowWidth(width),
 	_windowHeight(height)
 {
-	GLuint vertex_array_id;
 
 	if (glfwInit() == GLFW_FALSE)
 		throw std::runtime_error("Failed to initialize GLFW");

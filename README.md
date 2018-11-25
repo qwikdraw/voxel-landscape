@@ -1,7 +1,22 @@
-# Voxel-instancing
+# Voxel Landscape
 
-Voxels are all rendered as instanced cubes with various sizes, calculated with octrees. The following image nicely demonstrates it:
+Procedural voxel landscape engine
 
-![alt text](https://raw.githubusercontent.com/theo-walton/Voxel-instancing/master/screenshots/lemon.png)
+### Requirements
+`pkg-config`
+`glm`
+`glfw`
+`wget`
+`make`
 
-current problems I need to overcome: fillrate issues, octree generation is too slow.
+### Building
+
+On macOS:
+```
+./deps.sh
+make
+```
+
+### Team
+Theo Walton
+Logan Kaser

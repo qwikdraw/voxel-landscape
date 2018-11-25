@@ -292,8 +292,6 @@ glm::ivec2 Chunk::Pos()
 
 void Chunk::Render(const Projection& projection, const std::vector<Chunk*>& chunks)
 {
-    GLenum err;
-
     _program->Use();
     glBindTexture(GL_TEXTURE_2D, _texID);
     glActiveTexture(GL_TEXTURE0);
