@@ -22,7 +22,7 @@ DEP = $(OBJ:%.o=%.d)
 
 MAKEFLAGS=-j4
 
-CPPFLAGS = -std=c++17 -Wall -Wextra -Werror -Wno-unused-parameter \
+CPPFLAGS = -std=c++14 -Wall -Wextra -Werror -Wno-unused-parameter \
 $(shell pkg-config --cflags glfw3 glm) \
 -I lib/lodepng \
 -g -O3 -march=native \
@@ -30,7 +30,7 @@ $(shell pkg-config --cflags glfw3 glm) \
 
 LDFLAGS = -framework OpenGl \
 $(shell pkg-config --libs glfw3 glm) \
--L lib/lodepng -llodepng -pipe -flto=thin \
+-L lib/lodepng -llodepng -pipe \
 #-fsanitize=address -fsanitize=undefined
 
 all: $(OBJ_DIR) $(NAME)

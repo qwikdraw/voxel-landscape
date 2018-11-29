@@ -1,7 +1,5 @@
 #include "ShadingProgram.hpp"
 
-ShadingProgram::ShadingProgram(void) {}
-
 ShadingProgram::ShadingProgram(std::string vp, std::string fp)
 {
 	std::string shader;
@@ -55,8 +53,10 @@ void	ShadingProgram::CheckCompilation(GLuint id, std::string path)
 		char *log = new char[logsize];
 
 		glGetShaderInfoLog(id, logsize, nullptr, log);
-		std::cerr << std::endl << log << std::endl
-			  << "from: " << path << std::endl << std::endl;
+		std::cerr << "Error compiling shader" << std::endl
+			<< "src: \"" << path << '"' << std::endl
+			<< log << std::endl << std::endl;
+		delete[] log;
 	}
 }
 
@@ -73,7 +73,8 @@ void	ShadingProgram::CheckLinking(void)
 		char *log = new char[logsize];
 
 		glGetProgramInfoLog(_program, logsize, nullptr, log);
-		std::cerr << "there was a linking error:" << std::endl << log << std::endl;
+		std::cerr << "Error linking shader program:" << std::endl << log << std::endl;
+		delete[] log;
 	}
 }
 

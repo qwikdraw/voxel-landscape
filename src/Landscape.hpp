@@ -37,5 +37,5 @@ public:
 
 	// gets any loaded chunks, renders any chunks _chunksToRender, updates
 	// center
-	void	Render(const Projection& projection);
+	void	Render(const CameraUniforms& uniforms);
 };

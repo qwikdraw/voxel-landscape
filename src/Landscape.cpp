@@ -72,24 +72,23 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 	}
 	std::memmove(&_chunks, &tempChunks, sizeof(_chunks));
 	_center = newCenter;
-
 	for (int x = 0; x < _sizeX; x++)
 		for (int y = 0; y < _sizeY; y++)
 			if (!_chunks[x][y])
 				_chunkLoader.Add(glm::ivec2(x - _sizeX / 2, y - _sizeY / 2) * 32 + _center * 32);
 }
 
-void	Landscape::Render(const Projection& projection)
+void	Landscape::Render(const CameraUniforms& uniforms)
 {
-	glm::ivec2 newCenter = glm::round(glm::vec2(projection.position.x, projection.position.z) / 32);
-	if (abs(newCenter.x - _center.x) > 1 || abs(newCenter.y - _center.y) > 1)
+	glm::ivec2 newCenter = glm::round(glm::vec2(uniforms.position.x, uniforms.position.z) / 32);
+	if (abs(newCenter.x - _center.x) >= 1 || abs(newCenter.y - _center.y) >= 1)
 		_updateCenter(newCenter);
 
 	std::vector<Chunk*> renderList = _chunksToRender(
-		glm::vec2(projection.position.x, projection.position.z),
-		glm::vec2(projection.dir.x, projection.dir.z));
+		glm::vec2(uniforms.position.x, uniforms.position.z),
+		glm::vec2(uniforms.direction.x, uniforms.direction.z));
 
-	Chunk::Render(projection, renderList);
+	Chunk::Render(uniforms, renderList);
 
 	for (size_t x = 0; x < _sizeX; x++)
 	{

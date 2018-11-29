@@ -66,7 +66,7 @@ Chunk	*ChunkLoader::Get(const glm::ivec2& pos)
 		_mutex[1].unlock();
 		return nullptr;
 	}
-	Chunk *c =  _loadedChunks[map_key(pos)];
+	Chunk *c = _loadedChunks[map_key(pos)];
 	_loadedChunks.erase(map_key(pos));
 	_mutex[1].unlock();
 	return c;

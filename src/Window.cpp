@@ -27,6 +27,7 @@ Window::Window(int width, int height, std::string name) :
 	glfwSetMouseButtonCallback(_window, MouseButtonCallback);
 	glfwSetCursorPosCallback(_window, MousePositionCallback);
 	glfwMakeContextCurrent(_window);
+	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 }
@@ -39,7 +40,8 @@ void	Window::WindowHints(void)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_DEPTH_BITS, 32);
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 2);
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 }
 
 

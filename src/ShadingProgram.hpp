@@ -7,8 +7,6 @@ class	ShadingProgram
 private:
 
 	GLuint _program;
-	std::vector<GLuint> _uniformIDs;
-	ShadingProgram(void);
 
 	std::string	GetShaderCode(std::string filepath);
 	void	CheckCompilation(GLuint, std::string filepath);

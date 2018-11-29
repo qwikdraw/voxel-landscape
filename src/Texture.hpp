@@ -13,7 +13,7 @@ private:
 
 	struct TextureInfo
 	{
-		std::vector<unsigned char> *data;
+		std::vector<unsigned char>* data;
 		unsigned width;
 		unsigned height;
 	};

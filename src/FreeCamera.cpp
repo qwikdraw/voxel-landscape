@@ -1,103 +1,87 @@
 #include "FreeCamera.hpp"
 
-glm::vec3 const FreeCamera::_basePos = {0, 0, 0};
-glm::vec3 const FreeCamera::_up = {0, 0, 1};
-glm::vec3 const FreeCamera::_forward = {1, 0, 0};
+glm::vec3 const FreeCamera::_up = {0, 1, 0};
 
 FreeCamera::FreeCamera(Window& window) : _window(window)
 {
-	_projection.position = _basePos;
-	_rotation = glm::mat4(1);
+	_uniforms.position = glm::vec3(0, 128, 0);
+	_uniforms.direction = glm::vec3(0, 0, -1);
 	_aspect = 1;
 	_near = 0.1;
 	_far = 500;
 	_fov = 80;
 
-    glm::mat4 translate = glm::translate(_projection.position);
-	_projection.lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
-				       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
-				       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-	_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-	_projection.dir = glm::vec3(_rotation * glm::vec4(_forward, 0));
+	updateView();
+	_uniforms.projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+	_uniforms.VP = _uniforms.projection * _uniforms.view;
+	_mouse_pos_old = _window.MousePos();
 }
 
-void	FreeCamera::relativeMove(glm::vec3 amount, double dt)
+void	FreeCamera::updateView(void)
 {
-	glm::vec3 absolute = glm::vec3(_rotation * glm::vec4(amount, 0));
-	_projection.position += absolute * dt * 50;
+	_uniforms.view = glm::lookAt(
+		_uniforms.position,
+		_uniforms.position + _uniforms.direction,
+		_up
+	);
 }
 
 void	FreeCamera::Update(double dt)
 {
-	//std::cout << "cam pos: ";
-	//std::cout << _projection.position.x << " " << _projection.position.y << " " << _projection.position.z
-	//	  << std::endl;
 	bool moved = false;
 
-	_aspect = _window.GetAspect();
+	if (_aspect != _window.GetAspect())
+	{
+		_uniforms.projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+	}
 	if (_window.Key('W'))
 	{
-		relativeMove(_forward, dt);
+		_uniforms.position += _uniforms.direction * 50 * dt;
 		moved = true;
 	}
 	if (_window.Key('S'))
 	{
-		relativeMove(-_forward, dt);
+		_uniforms.position -= _uniforms.direction * 50 * dt;
 		moved = true;
 	}
 	if (_window.Key('A'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(90.0f), _up), dt);
+		_uniforms.position -= glm::cross(_uniforms.direction, _up) * 50 * dt;
 		moved = true;
 	}
 	if (_window.Key('D'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(-90.0f), _up), dt);
+		_uniforms.position += glm::cross(_uniforms.direction, _up) * 50 * dt;
 		moved = true;
 	}
 	if (_window.Key('Z'))
 	{
-		relativeMove(_up, dt);
+		_uniforms.position += _up * 50 * dt;
 		moved = true;
 	}
 	if (_window.Key('X'))
 	{
-		relativeMove(-_up, dt);
+		_uniforms.position -= _up * 50 * dt;
 		moved = true;
 	}
-	if (_window.Key(GLFW_KEY_LEFT))
+
+	if (_window.MousePos() != _mouse_pos_old)
 	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), _up);
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_RIGHT))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), _up);
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_DOWN))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), glm::vec3(0, 1, 0));
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_UP))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), glm::vec3(0, 1, 0));
+		glm::vec2 mouse_delta = _mouse_pos_old - _window.MousePos();
+		_uniforms.direction = glm::rotate(_uniforms.direction, mouse_delta.x, glm::vec3(0, 1, 0));
+		_uniforms.direction = glm::rotate(_uniforms.direction, mouse_delta.y, -glm::cross(_uniforms.direction, _up));
+		_mouse_pos_old = _window.MousePos();
 		moved = true;
 	}
 
 	if (moved)
 	{
-		glm::mat4 translate = glm::translate(_projection.position);
-		_projection.lookAt = glm::lookAt(glm::vec3(translate * glm::vec4(_basePos, 1)),
-					       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
-					       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-		_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-		_projection.dir	= glm::vec3(_rotation * glm::vec4(_forward, 0));
+		updateView();
+		_uniforms.VP = _uniforms.projection * _uniforms.view;
 	}
 }
 
-const Projection& FreeCamera::Projection(void)
+const CameraUniforms& FreeCamera::GetUniforms(void)
 {
-	return _projection;
+	return _uniforms;
 }

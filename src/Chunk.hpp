@@ -24,7 +24,7 @@ typedef std::vector<Column> land_section_t;
 typedef std::array<std::array<land_section_t, 34>, 34> land_map_t;
 
 // generates generates a reproducable landmap based on pos
-land_map_t terrain_gen(glm::ivec2 pos);
+land_map_t* terrain_gen(glm::ivec2 pos);
 
 // removes overlapping sections of a and b, returning the new result
 // as a pair
@@ -34,12 +34,13 @@ range_xor(land_section_t a, land_section_t b);
 // a chunk has dimensions of 32x32x256
 class Chunk
 {
-    static constexpr const char* _vertexPath = "src/voxel_vert.glsl";
-    static constexpr const char* _fragPath = "src/voxel_frag.glsl";
+    static constexpr const char* _vertexPath = "src/shaders/voxel.vert";
+    static constexpr const char* _fragPath = "src/shaders/voxel.frag";
 
     static ShadingProgram *_program;
     static GLuint _perspectiveID;
     static GLuint _lookAtID;
+    static GLuint _VPID;
     static GLuint _posID;
     static GLuint _camposID;
     static GLuint _texID;
@@ -79,10 +80,11 @@ class Chunk
         land_section_t left,
         land_section_t front,
         land_section_t back,
-        land_section_t main);
+        land_section_t main
+    );
 
     // fill the _triangles, _uvs and _normals
-    void _createMesh(const land_map_t&);
+    void _createMesh(const land_map_t*);
 
 public:
 
@@ -106,6 +108,6 @@ public:
     // returns the position of the chunk
     glm::ivec2 Pos();
 
-    // render vector of chunks with view matrix (projection * lookat)
-    static void Render(const Projection&, const std::vector<Chunk*>&);
+    // render vector of chunks
+    static void Render(const CameraUniforms&, const std::vector<Chunk*>&);
 };

@@ -3,35 +3,34 @@
 #include "util_inc.hpp"
 #include "Window.hpp"
 
-struct	Projection
+struct	CameraUniforms
 {
-	glm::mat4 lookAt;
-	glm::mat4 perspective;
+	glm::mat4 view;
+	glm::mat4 projection;
+	glm::mat4 VP;
 	glm::vec3 position;
-	glm::vec3 dir;
+	glm::vec3 direction;
 };
 
 class	FreeCamera
 {
-	static glm::vec3 const _basePos;
 	static glm::vec3 const _up;
 	static glm::vec3 const _forward;
 
 	Window& _window;
-
-	glm::mat4 _rotation;
+	glm::vec2 _mouse_pos_old;
 	float _aspect;
 	float _near;
 	float _far;
 	float _fov;
-	Projection _projection;
+
+	CameraUniforms _uniforms;
 
 	void	relativeMove(glm::vec3 amount, double dt);
+	void	updateView(void);
 
 public:
-
 	FreeCamera(Window& window);
-
 	void	Update(double dt);
-	const Projection& Projection(void);
+	const	CameraUniforms& GetUniforms(void);
 };
