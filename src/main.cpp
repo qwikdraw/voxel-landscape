@@ -38,7 +38,6 @@ int	main(void)
 		landscape.Render(cam.GetUniforms());
 		sky.Render(cam.GetUniforms());
 		fps.Render(window);
-		glFinish();
 		window.Render();
 		if (window.Key(GLFW_KEY_ESCAPE))
 			break;

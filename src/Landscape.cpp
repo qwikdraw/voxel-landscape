@@ -81,7 +81,7 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 void	Landscape::Render(const CameraUniforms& uniforms)
 {
 	glm::ivec2 newCenter = glm::round(glm::vec2(uniforms.position.x, uniforms.position.z) / 32);
-	if (abs(newCenter.x - _center.x) >= 1 || abs(newCenter.y - _center.y) >= 1)
+	if (abs(newCenter.x - _center.x) > 1 || abs(newCenter.y - _center.y) > 1)
 		_updateCenter(newCenter);
 
 	std::vector<Chunk*> renderList = _chunksToRender(
