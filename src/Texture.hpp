@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <stdint.h>
 #include "lodepng.h"
 
 class	Texture
@@ -28,7 +29,7 @@ public:
 	//! Only supports png currently
 	Texture(std::string filepath);
 
-	unsigned	Width(void);
-	unsigned	Height(void);
-	unsigned char	*Data(void);
+	unsigned Width(void);
+	unsigned Height(void);
+	uint8_t* Data(void);
 };

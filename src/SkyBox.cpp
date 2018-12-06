@@ -129,10 +129,10 @@ SkyBox::~SkyBox(void)
 	delete _program;
 }
 
-void	SkyBox::Render(const CameraUniforms& uniforms)
+void	SkyBox::Render(const CameraData& cam_data)
 {
 	_program->Use();
-	glm::mat4 transform = uniforms.projection * glm::mat4(glm::mat3(uniforms.view));
+	glm::mat4 transform = cam_data.projection * glm::mat4(glm::mat3(cam_data.view));
 	glUniformMatrix4fv(
 		_projectionID,
 		1,

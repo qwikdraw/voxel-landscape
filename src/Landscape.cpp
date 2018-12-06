@@ -60,13 +60,12 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 			if (x - diff.x >= 0 && x - diff.x < _sizeX &&
 				y - diff.y >= 0 && y - diff.y < _sizeY)
 			{
-				tempChunks[size_t(x - diff.x)][size_t(y - diff.y)] =
-					_chunks[size_t(x)][size_t(y)];
+				tempChunks[x - diff.x][y - diff.y] = _chunks[x][y];
 			}
-			else if (_chunks[size_t(x)][size_t(y)])
+			else if (_chunks[x][y])
 			{
-					_chunks[size_t(x)][size_t(y)]->Unload();
-					delete _chunks[size_t(x)][size_t(y)];
+					_chunks[x][y]->Unload();
+					delete _chunks[x][y];
 			}
 		}
 	}
@@ -78,17 +77,18 @@ void Landscape::_updateCenter(glm::ivec2 newCenter)
 				_chunkLoader.Add(glm::ivec2(x - _sizeX / 2, y - _sizeY / 2) * 32 + _center * 32);
 }
 
-void	Landscape::Render(const CameraUniforms& uniforms)
+void	Landscape::Render(const CameraData& cam_data)
 {
-	glm::ivec2 newCenter = glm::round(glm::vec2(uniforms.position.x, uniforms.position.z) / 32);
+	glm::ivec2 newCenter = glm::round(glm::vec2(cam_data.position.x, cam_data.position.z) / 32);
 	if (abs(newCenter.x - _center.x) > 1 || abs(newCenter.y - _center.y) > 1)
 		_updateCenter(newCenter);
 
 	std::vector<Chunk*> renderList = _chunksToRender(
-		glm::vec2(uniforms.position.x, uniforms.position.z),
-		glm::vec2(uniforms.direction.x, uniforms.direction.z));
+		glm::vec2(cam_data.position.x, cam_data.position.z),
+		glm::vec2(cam_data.direction.x, cam_data.direction.z)
+	);
 
-	Chunk::Render(uniforms, renderList);
+	Chunk::Render(cam_data, renderList);
 
 	for (size_t x = 0; x < _sizeX; x++)
 	{

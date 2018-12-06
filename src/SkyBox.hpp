@@ -27,5 +27,5 @@ public:
 	SkyBox(std::string right, std::string left, std::string top,
 		   std::string bot, std::string back, std::string front);
 	~SkyBox(void);
-	void	Render(const CameraUniforms& uniforms);
+	void	Render(const CameraData& cam_data);
 };

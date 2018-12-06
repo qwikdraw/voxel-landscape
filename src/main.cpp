@@ -10,7 +10,7 @@ int	main(void)
 {
 	GLenum err;
 
-	Window window(1000, 1000, "");
+	Window window(2560, 1440, "ft_vox");
 	glClearColor(0.2, 0.25, 0.3, 1);
 
 	FPSDisplay fps;
@@ -35,8 +35,8 @@ int	main(void)
 		clock.Step();
 		window.Clear();
 		cam.Update(clock.Delta());
-		landscape.Render(cam.GetUniforms());
-		sky.Render(cam.GetUniforms());
+		landscape.Render(cam.GetCameraData());
+		sky.Render(cam.GetCameraData());
 		fps.Render(window);
 		window.Render();
 		if (window.Key(GLFW_KEY_ESCAPE))

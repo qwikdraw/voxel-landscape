@@ -14,12 +14,13 @@ Window::Window(int width, int height, std::string name) :
 		throw std::runtime_error("Failed to initialize GLFW");
 	WindowHints();
 	glfwSetErrorCallback(ErrorCallback);
-	_window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
+	_window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 	if (!_window)
 	{
 		glfwTerminate();
 		throw std::runtime_error("Failed to initialize window");
 	}
+	glfwFocusWindow(_window);
 	glfwSetWindowUserPointer(_window, this);
 	glfwSetWindowSizeCallback(_window, WindowResizeCallback);
 	glfwSetWindowPosCallback(_window, WindowMoveCallback);
@@ -27,9 +28,11 @@ Window::Window(int width, int height, std::string name) :
 	glfwSetMouseButtonCallback(_window, MouseButtonCallback);
 	glfwSetCursorPosCallback(_window, MousePositionCallback);
 	glfwMakeContextCurrent(_window);
-	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	glfwSwapInterval(0);
+	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//Fullscreen();
 }
 
 void	Window::WindowHints(void)
@@ -39,10 +42,7 @@ void	Window::WindowHints(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_DEPTH_BITS, 32);
-	//glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 }
-
 
 void	Window::GetWindowSize(int &width, int &height)
 {
@@ -86,6 +86,17 @@ void	Window::GetSize(float &width, float &height)
 
 	width = _width * actualWidth;
 	height = _height * actualHeight;
+}
+
+void	Window::Fullscreen()
+{
+	const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+	glfwSetWindowMonitor(
+		_window,
+		glfwGetPrimaryMonitor(),
+		0, 0, mode->width, mode->height, mode->refreshRate
+	);
 }
 
 void	Window::SetRenderMask(float x, float y, float width, float height)

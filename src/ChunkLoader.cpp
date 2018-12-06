@@ -86,13 +86,16 @@ void	ChunkLoader::Clear(void)
 
 void	ChunkLoader::DeleteDeadChunks(void)
 {
+	_mutex[1].lock();
 	if (_chunksToFree.empty())
+	{
+		_mutex[1].unlock();
 		return;
+	}
 	Chunk* c = _chunksToFree.front();
 	c->Unload();
 	delete c;
 
-	_mutex[1].lock();
 	_chunksToFree.pop_front();
 	_mutex[1].unlock();
 }

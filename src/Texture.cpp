@@ -13,7 +13,7 @@ Texture::Texture(std::string filepath)
 	}
 	else
 	{
-		_imageData = new std::vector<unsigned char>;
+		_imageData = new std::vector<uint8_t>;
 		unsigned error = lodepng::decode(*_imageData, _width, _height, filepath.c_str());
 
 		if (error)
@@ -39,17 +39,17 @@ Texture::Texture(std::string filepath)
 	}
 }
 
-unsigned	Texture::Width(void)
+unsigned Texture::Width(void)
 {
 	return _width;
 }
 
-unsigned	Texture::Height(void)
+unsigned Texture::Height(void)
 {
 	return _height;
 }
 
-unsigned char	*Texture::Data(void)
+uint8_t* Texture::Data(void)
 {
-	return &(*_imageData)[0];
+	return _imageData->data();
 }
