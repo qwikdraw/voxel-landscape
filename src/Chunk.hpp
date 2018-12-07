@@ -11,7 +11,7 @@ struct Column
 	int top;
 };
 
-enum BLOCK {STONE, DIRT, SNOW, GRASS, SAND, GRAVEL, CLAY, BEDROCK};
+enum BLOCK {STONE, DIRT, SNOW, GRASS, SAND, GRAVEL, GAETAN, BEDROCK};
 
 // each pair specifies a start and end height for the land.
 // follows following rules:

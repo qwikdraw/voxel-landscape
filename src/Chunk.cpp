@@ -15,15 +15,14 @@ GLuint Chunk::_texLocID;
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
 
 // 0 <= a, b <= 1
-static land_section_t section_gen(float a, float b)
+static land_section_t section_gen(float a, float b, float c)
 {
 	if (a < 0 || b < 0 || a > 1 || b > 1)
 		throw std::runtime_error("input must be between 0 and 1");
 
-	float height = 100 + 156 * a;
-	float cavern_begin = 10 + 128 * a;
-	float cavern_end = 256 * b;
-
+	float height = 100.0f + 126.0f * a + (c * 30 * a);
+	float cavern_begin = 10.0f + 128.0f * a;
+	float cavern_end = 230.0f * b;
 	land_section_t out;
 
 	// if there is no cavern
@@ -43,6 +42,8 @@ land_map_t* terrain_gen(glm::ivec2 pos)
 	// 34 because 32x32 grid + border on index 0 and 33
 	float noise_1;
 	float noise_2;
+	float noise_3;
+	float var;
 	land_map_t* landmap = new land_map_t;
 
 	for (size_t x = 0; x < 34; x++)
@@ -52,36 +53,52 @@ land_map_t* terrain_gen(glm::ivec2 pos)
 			noise_1 = (glm::perlin(
 				glm::vec2(glm::ivec2(x, z) + pos) / 93.37f
 			) + 1.0f) / 2.0f;
-			noise_2 = (glm::simplex(
+			noise_2 = (glm::perlin(
 				glm::vec2(glm::ivec2(x, z) + pos +
 				glm::ivec2(444, 124)) / 75.37f
 			) + 1.0f) / 2.0f;
-			(*landmap)[x][z] = section_gen(noise_1, noise_2);
+			noise_3 = (glm::perlin(
+				glm::vec2(glm::ivec2(x, z) + pos +
+				glm::ivec2(-44, 67)) / 14.24f
+			) + 1.0f) / 2.0f;
+			var = (glm::perlin(
+				glm::vec2(glm::ivec2(x, z) + pos +
+				glm::ivec2(-4666, 27)) / 400.55f
+			) + 1.0f) / 2.0f;
+			(*landmap)[x][z] = section_gen(std::max(noise_1, var), noise_2, var * noise_3);
 		}
 	}
 	return landmap;
 }
 
-static BLOCK get_biome(int x, int z)
+static BLOCK get_biome(int x, int z, int variance)
 {
 
+	x += variance;
+	z += variance;
 	float temperature = (glm::perlin(
-		glm::vec2(glm::ivec2(x, z) + glm::ivec2(-564, 724)) / 130.37
+		glm::vec2(glm::ivec2(x, z) + glm::ivec2(-564, 724)) / 244.37
 	) + 1.0f) / 2.0f;
 
 	float humidity = (glm::simplex(
-		glm::vec2(glm::ivec2(x, z) + glm::ivec2(444, -124)) / 150.37
+		glm::vec2(glm::ivec2(x, z) + glm::ivec2(444, -124)) / 251.37
 	) + 1.0f) / 2.0f;
 
-	if (temperature < 0.2)
+	if (temperature < 0.3)
 	{
-		if (humidity > 0.6)
+		if (humidity > 0.5)
 			return BLOCK::SNOW;
 		else
 			return BLOCK::BEDROCK;
 	}
-	else if (temperature < 0.7)
+	else if (temperature < 0.6)
+	{
+		if (humidity > 0.95)
+			return BLOCK::GRAVEL;
 		return BLOCK::GRASS;
+	}
+	else if (temperature >= 0.87)
+		return BLOCK::GAETAN;
 	else
 		return BLOCK::SAND;
 }
@@ -298,7 +315,7 @@ void Chunk::_addSection(float x, float z,
 	if (top < 120 + variance)
 		biome = BLOCK::STONE;
 	else
-		biome = get_biome(_pos.x + x, _pos.y + z);
+		biome = get_biome(_pos.x + x, _pos.y + z, variance);
 	for (auto col : main)
 	{
 		// top face
