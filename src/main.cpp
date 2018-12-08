@@ -1,4 +1,3 @@
-
 #include "Chunk.hpp"
 #include "Window.hpp"
 #include "FreeCamera.hpp"
@@ -11,19 +10,20 @@ int	main(void)
 {
 	GLenum err;
 
-	Window window(1000, 1000, "");
+	Window window(2560, 1440, "ft_vox");
 	glClearColor(0.2, 0.25, 0.3, 1);
-
 
 	FPSDisplay fps;
 	FreeCamera cam(window);
 	Time clock;
-	SkyBox sky("assets/textures/skybox/right.png",
-				"assets/textures/skybox/left.png",
-				"assets/textures/skybox/top.png",
-				"assets/textures/skybox/bottom.png",
-				"assets/textures/skybox/front.png",
-				"assets/textures/skybox/back.png");
+	SkyBox sky(
+		"assets/textures/skybox/right.png",
+		"assets/textures/skybox/left.png",
+		"assets/textures/skybox/top.png",
+		"assets/textures/skybox/bottom.png",
+		"assets/textures/skybox/front.png",
+		"assets/textures/skybox/back.png"
+	);
 
 	Chunk::Init();
 	Landscape landscape;
@@ -35,11 +35,12 @@ int	main(void)
 		clock.Step();
 		window.Clear();
 		cam.Update(clock.Delta());
-		sky.Render(cam.Projection());
-		landscape.Render(cam.Projection());
+		landscape.Render(cam.GetCameraData());
+		sky.Render(cam.GetCameraData());
 		fps.Render(window);
-		glFinish();
 		window.Render();
+		if (window.Key(GLFW_KEY_ESCAPE))
+			break;
 	}
 	window.Close();
 }

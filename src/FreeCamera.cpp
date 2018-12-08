@@ -1,103 +1,106 @@
+#include <math.h>
 #include "FreeCamera.hpp"
 
-glm::vec3 const FreeCamera::_basePos = {0, 0, 0};
-glm::vec3 const FreeCamera::_up = {0, 0, 1};
-glm::vec3 const FreeCamera::_forward = {1, 0, 0};
-
-FreeCamera::FreeCamera(Window& window) : _window(window)
+FreeCamera::FreeCamera(Window& window, double yaw, double pitch) : _window(window)
 {
-	_projection.position = _basePos;
-	_rotation = glm::mat4(1);
-	_aspect = 1;
+	_data.position = glm::vec3(0, 128, 0);
+	_data.direction = glm::vec3(0, 0, -1);
+	_aspect = 1.0;
 	_near = 0.1;
-	_far = 500;
-	_fov = 80;
+	_far = 500.0;
+	_fov = 80.0;
+	_yaw = yaw;
+	_pitch = pitch;
 
-    glm::mat4 translate = glm::translate(_projection.position);
-	_projection.lookAt = glm::lookAt(glm::vec3(translate * _rotation * glm::vec4(_basePos, 1)),
-				       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
-				       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-	_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-	_projection.dir = glm::vec3(_rotation * glm::vec4(_forward, 0));
+	updateView();
+	_data.projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+	_data.VP = _data.projection * _data.view;
+	_mouse_pos_old = _window.MousePos();
 }
 
-void	FreeCamera::relativeMove(glm::vec3 amount, double dt)
+void	FreeCamera::updateView(void)
 {
-	glm::vec3 absolute = glm::vec3(_rotation * glm::vec4(amount, 0));
-	_projection.position += absolute * dt * 50;
+	_data.direction = glm::vec3(
+		cos(_pitch) * sin(_yaw),
+		sin(_pitch),
+		cos(_pitch) * cos(_yaw)
+	);
+	_up = glm::cross(
+		glm::vec3(
+			sin(_yaw - M_PI / 2.0),
+			0.0,
+			cos(_yaw - M_PI / 2.0)
+		),
+		_data.direction
+	);
+	_data.view = glm::lookAt(
+		_data.position,
+		_data.position + _data.direction,
+		_up
+	);
 }
 
 void	FreeCamera::Update(double dt)
 {
-	//std::cout << "cam pos: ";
-	//std::cout << _projection.position.x << " " << _projection.position.y << " " << _projection.position.z
-	//	  << std::endl;
 	bool moved = false;
 
-	_aspect = _window.GetAspect();
+	if (_aspect != _window.GetAspect())
+	{
+		_aspect = _window.GetAspect();
+		_data.projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+	}
+	float speed = 1.0f;
+	if (_window.Key(' '))
+		speed *= 20.0f;
 	if (_window.Key('W'))
 	{
-		relativeMove(_forward, dt);
+		_data.position += _data.direction * dt * speed;
 		moved = true;
 	}
 	if (_window.Key('S'))
 	{
-		relativeMove(-_forward, dt);
+		_data.position -= _data.direction * dt * speed;
 		moved = true;
 	}
 	if (_window.Key('A'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(90.0f), _up), dt);
+		_data.position -= glm::cross(_data.direction, _up) * dt * speed;
 		moved = true;
 	}
 	if (_window.Key('D'))
 	{
-		relativeMove(glm::rotate(_forward, glm::radians(-90.0f), _up), dt);
+		_data.position += glm::cross(_data.direction, _up) * dt * speed;
 		moved = true;
 	}
 	if (_window.Key('Z'))
 	{
-		relativeMove(_up, dt);
+		_data.position += _up * dt * speed;
 		moved = true;
 	}
 	if (_window.Key('X'))
 	{
-		relativeMove(-_up, dt);
+		_data.position -= _up * dt * speed;
 		moved = true;
 	}
-	if (_window.Key(GLFW_KEY_LEFT))
+
+	if (_window.MousePos() != _mouse_pos_old)
 	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), _up);
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_RIGHT))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), _up);
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_DOWN))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(90.0 * dt), glm::vec3(0, 1, 0));
-		moved = true;
-	}
-	if (_window.Key(GLFW_KEY_UP))
-	{
-		_rotation = glm::rotate(_rotation, (float)glm::radians(-90.0 * dt), glm::vec3(0, 1, 0));
+		glm::vec2 mouse_delta = _mouse_pos_old - _window.MousePos();
+		_yaw += mouse_delta.x * dt * 50.0;
+		_pitch -= mouse_delta.y * dt * 50.0;
+
+		_mouse_pos_old = _window.MousePos();
 		moved = true;
 	}
 
 	if (moved)
 	{
-		glm::mat4 translate = glm::translate(_projection.position);
-		_projection.lookAt = glm::lookAt(glm::vec3(translate * glm::vec4(_basePos, 1)),
-					       glm::vec3(translate * _rotation * glm::vec4(_forward, 1)),
-					       glm::vec3(translate * _rotation * glm::vec4(_up, 0)));
-		_projection.perspective = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-		_projection.dir	= glm::vec3(_rotation * glm::vec4(_forward, 0));
+		updateView();
+		_data.VP = _data.projection * _data.view;
 	}
 }
 
-const Projection& FreeCamera::Projection(void)
+const CameraData& FreeCamera::GetCameraData(void)
 {
-	return _projection;
+	return _data;
 }

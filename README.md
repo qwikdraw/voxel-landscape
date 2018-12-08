@@ -3,11 +3,11 @@
 Procedural voxel landscape engine
 
 ### Requirements
-`pkg-config`
-`glm`
-`glfw`
-`wget`
-`make`
+`pkg-config`  
+`glm`  
+`glfw`  
+`wget`  
+`make`  
 
 ### Building
 
@@ -18,5 +18,5 @@ make
 ```
 
 ### Team
-Theo Walton
+Theo Walton  
 Logan Kaser

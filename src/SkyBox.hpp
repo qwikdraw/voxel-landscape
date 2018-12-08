@@ -7,8 +7,8 @@
 
 class	SkyBox
 {
-	static constexpr const char* _vertexPath = "src/skybox_vert.glsl";
-    static constexpr const char* _fragPath = "src/skybox_frag.glsl";
+	static constexpr const char* _vertexPath = "src/shaders/skybox.vert";
+	static constexpr const char* _fragPath = "src/shaders/skybox.frag";
 
 	static const std::vector<float> _vertexArray;
 
@@ -25,7 +25,7 @@ class	SkyBox
 
 public:
 	SkyBox(std::string right, std::string left, std::string top,
-	       std::string bot, std::string back, std::string front);
+		   std::string bot, std::string back, std::string front);
 	~SkyBox(void);
-	void	Render(const Projection& projection);
+	void	Render(const CameraData& cam_data);
 };

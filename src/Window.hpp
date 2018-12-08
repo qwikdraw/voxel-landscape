@@ -64,6 +64,7 @@ public:
 	//! Closes the window.
 	void	Close(void);
 
+
 	//! Set a rendering stencil.
 	/*! Specify the area of the window you wish to draw to. (x, y) is the coordinate of the bottom left part
 	of the rectangle you wish to draw to. Width and height define the rectangle that will be drawable with
@@ -77,6 +78,9 @@ public:
 
 	//! Get the current drawable area, value depends on the current stencil
 	void	GetSize(float &width, float &height);
+
+	//! Make window fullscreen.
+	void	Fullscreen(void);
 
 	//! Clears render zone with the current glClearColor.
 	void	Clear(void);

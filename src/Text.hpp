@@ -8,8 +8,8 @@ class	Text
 {
 private:
 	static constexpr const char* _fontFile = "assets/textures/game_font.png";
-	static constexpr const char* _vertexPath = "src/text_vert.glsl";
-    static constexpr const char* _fragPath = "src/text_frag.glsl";
+	static constexpr const char* _vertexPath = "src/shaders/text.vert";
+    static constexpr const char* _fragPath = "src/shaders/text.frag";
 
 	static ShadingProgram *_program;
 
