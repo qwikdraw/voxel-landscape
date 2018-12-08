@@ -20,7 +20,7 @@ Texture::Texture(std::string filepath)
 			std::cerr << "Error loading texture `" << filepath
 				<< "`: " << lodepng_error_text(error) << std::endl;
 
-		std::vector<unsigned char> temp(_width * 4);
+		std::vector<uint8_t> temp(_width * 4);
 	
 		for (size_t i = 0; i < _height / 2; i++)
 		{

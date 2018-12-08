@@ -14,13 +14,13 @@ private:
 
 	struct TextureInfo
 	{
-		std::vector<unsigned char>* data;
+		std::vector<uint8_t>* data;
 		unsigned width;
 		unsigned height;
 	};
 
 	static std::map<std::string, TextureInfo> _cache;
-	std::vector<unsigned char> *_imageData;
+	std::vector<uint8_t> *_imageData;
 	unsigned _width;
 	unsigned _height;
 	

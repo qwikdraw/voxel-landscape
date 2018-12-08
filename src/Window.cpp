@@ -32,7 +32,7 @@ Window::Window(int width, int height, std::string name) :
 	glDepthFunc(GL_LESS);
 	glfwSwapInterval(0);
 	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	//Fullscreen();
+	Fullscreen();
 }
 
 void	Window::WindowHints(void)
