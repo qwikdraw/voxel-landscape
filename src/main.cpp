@@ -10,7 +10,7 @@ int	main(void)
 {
 	GLenum err;
 
-	Window window(2560, 1440, "ft_vox");
+	Window window(1920, 1080, "ft_vox");
 	glClearColor(0.2, 0.25, 0.3, 1);
 
 	FPSDisplay fps;
