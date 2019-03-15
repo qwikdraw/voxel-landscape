@@ -2,6 +2,8 @@
 
 Procedural voxel landscape engine
 
+![Flyover gif](https://raw.githubusercontent.com/qwikdraw/voxel-landscape/master/screenshots/voxel.gif)
+
 ### Requirements
 `pkg-config`  
 `glm`  
